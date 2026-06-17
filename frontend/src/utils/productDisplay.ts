@@ -27,6 +27,8 @@ function categoryFallbackCover(category: string) {
 }
 
 const explicitCovers: Record<string, string> = {
+  '桑葚山楂块': '/images/market/b3e0b584f68715205cd6f2f2c6ab20ce_720.png',
+  '艾叶红花泡脚包': '/images/market/fd16a2b13332d4a635895a18c03306f7_720.png',
   '水牛角刮痧板': '/images/market/1eec53851cda1a2c6197406d79b29ace.png',
   '甘肃黄芪片': '/images/market/f8707b9bd50fa496cb0607e54b6f0ff6_720.png',
   '党参黄芪牛肉粒': '/images/market/65a4d09b25782d71c0029f4aa9549256_720.png',
