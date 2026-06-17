@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import { productCoverSrc } from '@/utils/productDisplay'
 import { getMarketCategoryMeta } from '@/utils/marketCategories'
-import { IMAGE_ERROR_PLACEHOLDER } from '@/utils/image'
 
 const props = withDefaults(
   defineProps<{
@@ -63,12 +62,6 @@ watch(src, () => {
       @load="onLoad"
       @error="onError"
     />
-    <img
-      v-if="loadFailed"
-      :src="IMAGE_ERROR_PLACEHOLDER"
-      alt=""
-      class="market-img error-img"
-    />
     <div
       v-if="loadFailed"
       class="market-fallback"
@@ -128,11 +121,6 @@ watch(src, () => {
   object-fit: contain;
   padding: 8px;
   background: #faf8f4;
-}
-
-.error-img {
-  opacity: 1;
-  object-fit: cover;
 }
 
 .market-fallback {

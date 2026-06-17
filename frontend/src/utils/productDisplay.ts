@@ -21,7 +21,18 @@ function isFallbackCover(url?: string) {
   return /picsum\.photos\/seed\//.test(url) || /market-p\d+/.test(url)
 }
 
-/** 商品封面：优先数据库图片，其次生成稳定的商品图，避免出现“测试占位感” */
+function categoryFallbackCover(category: string) {
+  const safeCategory = category || 'food_medicine'
+  return `/images/market/${safeCategory}.svg`
+}
+
+const explicitCovers: Record<string, string> = {
+  '水牛角刮痧板': '/images/market/1eec53851cda1a2c6197406d79b29ace.png',
+  '甘肃黄芪片': '/images/market/f8707b9bd50fa496cb0607e54b6f0ff6_720.png',
+  '党参黄芪牛肉粒': '/images/market/65a4d09b25782d71c0029f4aa9549256_720.png',
+}
+
+/** 商品封面：优先数据库图片，其次使用明确绑定的本地图片，再退回分类 SVG。 */
 export function productCoverSrc(product: {
   id?: number
   productName: string
@@ -31,7 +42,9 @@ export function productCoverSrc(product: {
   if (isUsableCover(product.coverImage) && !isFallbackCover(product.coverImage)) {
     return product.coverImage!.trim()
   }
-  return `https://picsum.photos/seed/${picsumSeed(product)}/600/600`
+  const explicit = explicitCovers[product.productName.trim()]
+  if (explicit) return explicit
+  return categoryFallbackCover(product.category)
 }
 
 /** 解析商品 detail 字段：【标签】| 规格：… | 说明 */

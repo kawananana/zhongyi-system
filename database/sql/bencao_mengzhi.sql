@@ -598,8 +598,8 @@ INSERT INTO `product` (
     `product_name`, `herb_id`, `category`, `price`, `stock`, `cover_image`, `detail`, `sales_count`, `status`
 ) VALUES
 -- 养生茶疗
-('杭白菊枸杞茶', NULL, 'tea_therapy', 36.80, 420, 'https://picsum.photos/seed/chrysanthemum-goji-tea/400/400', '【养生茶疗】| 规格：15袋×5g | 桐乡杭白菊配宁夏枸杞，独立茶包，清肝火明目，办公室冲泡方便。', 2340, 1),
-('玫瑰红枣桂圆茶', NULL, 'tea_therapy', 42.00, 380, 'https://picsum.photos/seed/rose-jujube-tea/400/400', '【养生茶疗】| 规格：20袋×8g | 平阴玫瑰、新疆红枣、莆田桂圆，暖宫养血，女性日常调理。', 1876, 1),
+('杭白菊枸杞茶', NULL, 'tea_therapy', 36.80, 420, '/images/market/tea_therapy.svg', '【养生茶疗】| 规格：15袋×5g | 桐乡杭白菊配宁夏枸杞，独立茶包，清肝火明目，办公室冲泡方便。', 2340, 1),
+('玫瑰红枣桂圆茶', NULL, 'tea_therapy', 42.00, 380, '/images/market/b3e0b584f68715205cd6f2f2c6ab20ce_720.png', '【养生茶疗】| 规格：20袋×8g | 平阴玫瑰、新疆红枣、莆田桂圆，暖宫养血，女性日常调理。', 1876, 1),
 ('新会陈皮普洱茶', 6, 'tea_therapy', 68.00, 260, 'https://picsum.photos/seed/chenpi-puer/400/400', '【养生茶疗】| 规格：罐装250g | 广东新会陈皮拼云南熟普，理气健脾、消食解腻，耐泡回甘。', 956, 1),
 -- 艾灸艾柱
 ('蕲春三年陈艾柱', NULL, 'moxibustion', 58.00, 350, 'https://picsum.photos/seed/qichun-moxa/400/400', '【艾灸艾柱】| 规格：54粒×1.8cm | 湖北蕲春艾叶，三年陈化，烟少味醇，适配标准艾灸盒。', 3210, 1),
@@ -614,8 +614,8 @@ INSERT INTO `product` (
 ('《针灸学》教材精编', NULL, 'books', 45.00, 320, 'https://picsum.photos/seed/acupuncture-textbook/400/400', '【中医书籍】| 规格：平装 | 十四经脉穴位定位、针刺手法要点，配真人取穴彩图。', 876, 1),
 ('《中药学》速查手册', NULL, 'books', 32.00, 450, 'https://picsum.photos/seed/tcm-herb-handbook/400/400', '【中医书籍】| 规格：口袋本 | 常用药材性味归经、功效主治速查，实习备考实用。', 654, 1),
 -- 药食同源
-('桑葚山楂块', NULL, 'food_medicine', 39.90, 800, 'https://picsum.photos/seed/mulberry-hawthorn/400/400', '【药食同源】| 规格：220g/盒 | 桑葚、山楂实材冷压成型，酸甜软糯，健脾消食，独立小包装。', 5680, 1),
-('党参黄芪牛肉粒', NULL, 'food_medicine', 68.00, 450, 'https://picsum.photos/seed/beef-herb-snack/400/400', '【药食同源】| 规格：120g/袋 | 党参、黄芪入膳牛肉粒，高蛋白即食，补气养血，健身代餐。', 4230, 1),
+('水牛角刮痧板', NULL, 'physio_tools', 35.00, 600, '/images/market/1eec53851cda1a2c6197406d79b29ace.png', '【理疗工具】| 规格：约12cm | 天然水牛角打磨，薄边设计，面部背部经络疏通，配刮痧油。', 4560, 1),
+('甘肃黄芪片', 4, 'decoction', 48.00, 800, '/images/market/65a4d09b25782d71c0029f4aa9549256_720.png', '【滋补饮片】| 规格：100g/罐 | 岷县黄芪斜切片，豆腥味浓，煲汤泡茶，补气升阳。', 4560, 1),
 ('四神小棍', NULL, 'food_medicine', 29.90, 920, 'https://picsum.photos/seed/sishen-stick/400/400', '【药食同源】| 规格：320g/罐 | 茯苓、莲子、山药、芡实研磨成型，健脾祛湿，儿童老人皆宜。', 3890, 1),
 ('红枣枸杞核桃糕', 3, 'food_medicine', 48.00, 360, 'https://picsum.photos/seed/jujube-goji-cake/400/400', '【药食同源】| 规格：500g/盒 | 宁夏枸杞、新疆红枣、核桃仁，软糯不粘牙，滋补肝肾。', 2156, 1),
 -- 膏方系列
@@ -623,11 +623,11 @@ INSERT INTO `product` (
 ('九蒸九晒黑芝麻丸', NULL, 'herbal_paste', 59.90, 400, 'https://picsum.photos/seed/black-sesame-ball/400/400', '【膏方系列】| 规格：罐装200g | 传统九蒸九晒黑芝麻，补肾乌发，每日2丸即食。', 2876, 1),
 ('固本膏', NULL, 'herbal_paste', 128.00, 120, 'https://picsum.photos/seed/guben-paste/400/400', '【膏方系列】| 规格：150g/盒 | 人参、黄芪、枸杞等配伍膏方，大补元气，体虚乏力者调理。', 1543, 1),
 -- 理疗工具
-('水牛角刮痧板', NULL, 'physio_tools', 35.00, 600, 'https://picsum.photos/seed/gua-sha-plate/400/400', '【理疗工具】| 规格：约12cm | 天然水牛角打磨，薄边设计，面部背部经络疏通，配刮痧油。', 4560, 1),
+('水牛角刮痧板', NULL, 'physio_tools', 35.00, 600, '/images/market/1eec53851cda1a2c6197406d79b29ace.png', '【理疗工具】| 规格：约12cm | 天然水牛角打磨，薄边设计，面部背部经络疏通，配刮痧油。', 4560, 1),
 ('真空拔罐器12罐装', NULL, 'physio_tools', 49.90, 380, 'https://picsum.photos/seed/cupping-set/400/400', '【理疗工具】| 规格：12罐+抽气枪 | 家用真空拔罐，透明罐体，肩背腰腿祛湿活血。', 2340, 1),
 ('经络按摩刷', NULL, 'physio_tools', 28.00, 520, 'https://picsum.photos/seed/meridian-brush/400/400', '【理疗工具】| 规格：1把 | 树脂梳齿经络刷，腿臂腹部推拿，配合精油使用。', 1876, 1),
 -- 养生足疗
-('艾叶红花泡脚包', NULL, 'foot_therapy', 39.90, 700, 'https://picsum.photos/seed/mugwort-foot-bath/400/400', '【养生足疗】| 规格：30包×30g | 蕲春艾叶配红花、干姜，睡前泡脚20分钟，温经助眠。', 5120, 1),
+('党参黄芪牛肉粒', NULL, 'food_medicine', 68.00, 450, '/images/market/65a4d09b25782d71c0029f4aa9549256_720.png', '【药食同源】| 规格：120g/袋 | 党参、黄芪入膳牛肉粒，高蛋白即食，补气养血，健身代餐。', 4230, 1),
 ('老姜足浴包', NULL, 'foot_therapy', 29.90, 650, 'https://picsum.photos/seed/ginger-foot-soak/400/400', '【养生足疗】| 规格：20包 | 云南小黄姜切片烘干，驱寒暖足，手脚冰凉者适用。', 3890, 1),
 ('藏红花足浴盐', NULL, 'foot_therapy', 45.00, 300, 'https://picsum.photos/seed/saffron-foot-salt/400/400', '【养生足疗】| 规格：500g/袋 | 藏红花、海盐、艾叶粉，溶解快，活血通络，缓解疲劳。', 1654, 1),
 -- 精品礼盒
@@ -635,7 +635,7 @@ INSERT INTO `product` (
 ('宁夏枸杞礼盒', 3, 'gift_box', 158.00, 150, 'https://picsum.photos/seed/goji-gift-box/400/400', '【精品礼盒】| 规格：特级枸杞500g×2罐 | 中宁头茬枸杞，粒大饱满，滋补肝肾，精美礼盒装。', 1230, 1),
 ('银耳莲子羹礼盒', NULL, 'gift_box', 88.00, 200, 'https://picsum.photos/seed/tremella-gift/400/400', '【精品礼盒】| 规格：6碗装 | 古田银耳、建宁莲子即食羹，滋阴润肺，开盖即食。', 987, 1),
 -- 滋补饮片
-('甘肃黄芪片', 4, 'decoction', 48.00, 800, 'https://picsum.photos/seed/astragalus-slice/400/400', '【滋补饮片】| 规格：100g/罐 | 岷县黄芪斜切片，豆腥味浓，煲汤泡茶，补气升阳。', 4560, 1),
+('甘肃黄芪片', 4, 'decoction', 48.00, 800, '/images/market/f8707b9bd50fa496cb0607e54b6f0ff6_720.png', '【滋补饮片】| 规格：100g/罐 | 岷县黄芪斜切片，豆腥味浓，煲汤泡茶，补气升阳。', 4560, 1),
 ('岷县当归头片', 2, 'decoction', 52.00, 650, 'https://picsum.photos/seed/angelica-slice/400/400', '【滋补饮片】| 规格：100g | 甘肃岷县当归头片，油圈明显，补血活血，妇科常用。', 3890, 1),
 ('宁夏枸杞王', 3, 'decoction', 68.00, 500, 'https://picsum.photos/seed/goji-berry-dry/400/400', '【滋补饮片】| 规格：250g/袋 | 中宁特级大果枸杞，干燥饱满，泡茶嚼食，滋补肝肾。', 3210, 1),
 ('文山三七粉', NULL, 'decoction', 128.00, 200, 'https://picsum.photos/seed/panax-powder/400/400', '【滋补饮片】| 规格：50g/瓶 | 云南文山春三七超细粉，活血化瘀，跌打损伤及心脑血管养护。', 2156, 1);
