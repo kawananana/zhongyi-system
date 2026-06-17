@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff8e1"/>
+      <stop offset="100%" stop-color="#ffe0b2"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#bg)"/>
+  <rect x="305" y="120" width="10" height="100" rx="4" fill="#8d6e63"/>
+  <ellipse cx="310" cy="115" rx="18" ry="8" fill="#bdbdbd" opacity="0.6"/>
+  <circle cx="310" cy="110" r="5" fill="#ff6f00" opacity="0.8"/>
+  <text x="320" y="340" text-anchor="middle" fill="#e65100" font-size="28" font-family="sans-serif" font-weight="600">艾灸</text>
+</svg>

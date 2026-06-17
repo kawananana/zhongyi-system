@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fce4ec"/>
+      <stop offset="100%" stop-color="#f8bbd0"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#bg)"/>
+  <ellipse cx="320" cy="210" rx="55" ry="65" fill="#fff" opacity="0.75"/>
+  <ellipse cx="320" cy="200" rx="40" ry="45" stroke="#c2185b" stroke-width="3" fill="none"/>
+  <text x="320" y="340" text-anchor="middle" fill="#c2185b" font-size="28" font-family="sans-serif" font-weight="600">拔罐</text>
+</svg>

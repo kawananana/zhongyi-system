@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff3e0"/>
+      <stop offset="100%" stop-color="#ffcc80"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#bg)"/>
+  <ellipse cx="320" cy="220" rx="80" ry="25" fill="#fff" opacity="0.8"/>
+  <path d="M260 200 Q320 170 380 200" stroke="#ef6c00" stroke-width="4" fill="none"/>
+  <circle cx="290" cy="195" r="8" fill="#4caf50"/>
+  <circle cx="320" cy="188" r="8" fill="#8bc34a"/>
+  <circle cx="350" cy="195" r="8" fill="#ff9800"/>
+  <text x="320" y="340" text-anchor="middle" fill="#ef6c00" font-size="28" font-family="sans-serif" font-weight="600">药膳</text>
+</svg>

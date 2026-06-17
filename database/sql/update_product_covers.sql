@@ -1,0 +1,35 @@
+-- 恢复市集商品 picsum 随机图（与图鉴/食谱一致）
+USE `bencao_mengzhi`;
+
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/chrysanthemum-goji-tea/400/400' WHERE `product_name` = '杭白菊枸杞茶';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/rose-jujube-tea/400/400' WHERE `product_name` = '玫瑰红枣桂圆茶';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/chenpi-puer/400/400' WHERE `product_name` = '新会陈皮普洱茶';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/qichun-moxa/400/400' WHERE `product_name` = '蕲春三年陈艾柱';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/moxa-stick-bar/400/400' WHERE `product_name` = '无烟艾条';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/moxa-kit/400/400' WHERE `product_name` = '艾灸盒随身套装';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/angelica-lip/400/400' WHERE `product_name` = '当归草本润唇膏';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/astragalus-mask/400/400' WHERE `product_name` = '黄芪保湿面膜';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/pearl-cleanser/400/400' WHERE `product_name` = '珍珠粉洁面乳';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/huangdi-book/400/400' WHERE `product_name` = '《黄帝内经》白话图解';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/acupuncture-textbook/400/400' WHERE `product_name` = '《针灸学》教材精编';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/tcm-herb-handbook/400/400' WHERE `product_name` = '《中药学》速查手册';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/mulberry-hawthorn/400/400' WHERE `product_name` = '桑葚山楂块';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/beef-herb-snack/400/400' WHERE `product_name` = '党参黄芪牛肉粒';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/sishen-stick/400/400' WHERE `product_name` = '四神小棍';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/jujube-goji-cake/400/400' WHERE `product_name` = '红枣枸杞核桃糕';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/pear-paste/400/400' WHERE `product_name` = '川贝秋梨膏';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/black-sesame-ball/400/400' WHERE `product_name` = '九蒸九晒黑芝麻丸';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/guben-paste/400/400' WHERE `product_name` = '固本膏';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/gua-sha-plate/400/400' WHERE `product_name` = '水牛角刮痧板';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/cupping-set/400/400' WHERE `product_name` = '真空拔罐器12罐装';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/meridian-brush/400/400' WHERE `product_name` = '经络按摩刷';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/mugwort-foot-bath/400/400' WHERE `product_name` = '艾叶红花泡脚包';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/ginger-foot-soak/400/400' WHERE `product_name` = '老姜足浴包';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/saffron-foot-salt/400/400' WHERE `product_name` = '藏红花足浴盐';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/season-gift-box/400/400' WHERE `product_name` = '四季养生礼盒';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/goji-gift-box/400/400' WHERE `product_name` = '宁夏枸杞礼盒';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/tremella-gift/400/400' WHERE `product_name` = '银耳莲子羹礼盒';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/astragalus-slice/400/400' WHERE `product_name` = '甘肃黄芪片';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/angelica-slice/400/400' WHERE `product_name` = '岷县当归头片';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/goji-berry-dry/400/400' WHERE `product_name` = '宁夏枸杞王';
+UPDATE `product` SET `cover_image` = 'https://picsum.photos/seed/panax-powder/400/400' WHERE `product_name` = '文山三七粉';

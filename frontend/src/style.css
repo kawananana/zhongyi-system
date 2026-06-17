@@ -1,0 +1,38 @@
+:root {
+  /* 本草萌智 · 全站配色 */
+  --bc-bg: #f3efe6;
+  --bc-bg-card: #ffffff;
+  --bc-bg-muted: #faf8f4;
+  --bc-bg-sidebar: #f7f3eb;
+  --bc-border: #e8e0d4;
+  --bc-border-light: #f0ebe3;
+  --bc-primary: #1a5f3f;
+  --bc-primary-hover: #2d7a5a;
+  --bc-primary-light: #e8f5ee;
+  --bc-primary-soft: #f0f9f4;
+  --bc-accent: #8b6914;
+  --bc-price: #c45c26;
+  --bc-text: #3d3028;
+  --bc-text-secondary: #5c5046;
+  --bc-text-muted: #909399;
+  --bc-shadow: 0 2px 12px rgba(61, 48, 40, 0.06);
+  --bc-radius: 10px;
+  --bc-radius-lg: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: var(--bc-text);
+  background: var(--bc-bg);
+}
