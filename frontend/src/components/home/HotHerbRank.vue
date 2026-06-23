@@ -35,7 +35,7 @@ function metaLine(herb: HerbItem) {
       <div class="section-title">
         <span class="title-icon">🔥</span>
         <span>药材排行榜</span>
-        <span class="rank-hint">按浏览量</span>
+        <span class="rank-hint">按站内浏览</span>
       </div>
     </template>
     <el-empty v-if="!loading && herbs.length === 0" description="暂无药材" />

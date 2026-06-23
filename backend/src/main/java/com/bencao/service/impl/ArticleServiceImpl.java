@@ -3,6 +3,8 @@ package com.bencao.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bencao.common.ResultCode;
+import com.bencao.common.exception.BusinessException;
 import com.bencao.entity.Article;
 import com.bencao.mapper.ArticleMapper;
 import com.bencao.service.ArticleService;
@@ -28,5 +30,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
         wrapper.orderByDesc(Article::getViewCount);
         return page(new Page<>(page, pageSize), wrapper);
+    }
+
+    @Override
+    public Article getArticleDetail(Long id) {
+        Article article = getById(id);
+        if (article == null || article.getStatus() == null || article.getStatus() != 1) {
+            throw new BusinessException(ResultCode.NOT_FOUND);
+        }
+        article.setViewCount((article.getViewCount() == null ? 0 : article.getViewCount()) + 1);
+        updateById(article);
+        return article;
     }
 }

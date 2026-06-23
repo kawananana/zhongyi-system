@@ -6,9 +6,18 @@ export interface CareTextSegment {
   herbId?: number
 }
 
-/** 养护文案中的常用名 → 图鉴药材名 */
-const CONSTITUTION_HERB_ALIASES: Record<string, string> = {
+/** 文案中的常用名 → 图鉴药材名 */
+const HERB_TEXT_ALIASES: Record<string, string> = {
   红枣: '大枣',
+  白人参: '人参',
+  生甘草: '甘草',
+  紫苏叶: '紫苏',
+  鲜青蒿: '青蒿',
+  枸杞子: '枸杞',
+  熟地: '熟地黄',
+  高良姜: '良姜',
+  橘子皮: '陈皮',
+  小茴香: '茴香',
 }
 
 let cachedHerbIndex: Map<string, number> | null = null
@@ -33,7 +42,7 @@ export function buildHerbLinkIndex(herbs: HerbItem[]): Map<string, number> {
     }
   }
 
-  for (const [alias, canonical] of Object.entries(CONSTITUTION_HERB_ALIASES)) {
+  for (const [alias, canonical] of Object.entries(HERB_TEXT_ALIASES)) {
     const id = index.get(canonical)
     if (id) addIndexEntry(index, alias, id)
   }

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { fetchHerbFilterOptions, type HerbFilterOptions, type HerbItem } from '@/api/herb'
 import type { FilterTagItem, HerbFilterQuery } from '@/types/herb'
-import { HERB_CATEGORIES } from '@/utils/herbDisplay'
+import { HERB_CATEGORIES, filterHerbsByCategory } from '@/utils/herbDisplay'
 import { iconForMeridian, iconForNature, iconForTaste } from '@/utils/filterTagIcons'
 
 const props = defineProps<{
@@ -180,16 +180,15 @@ function toggleInList(list: { value: string[] }, value: string) {
   }
 }
 
-function selectCategory(key: string) {
+function selectCategory(key: string, options?: { silent?: boolean }) {
   activeCategory.value = key
-  emit('categoryChange', key)
+  if (!options?.silent) {
+    emit('categoryChange', key)
+  }
 }
 
 function filterByCategory(herbs: HerbItem[], categoryKey: string) {
-  if (!categoryKey) return herbs
-  const cat = HERB_CATEGORIES.find((c) => c.key === categoryKey)
-  if (!cat) return herbs
-  return herbs.filter((h) => cat.match(h))
+  return filterHerbsByCategory(herbs, categoryKey)
 }
 
 function initFromQuery(query: HerbFilterQuery) {

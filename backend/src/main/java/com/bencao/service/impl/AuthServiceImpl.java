@@ -6,6 +6,7 @@ import com.bencao.common.exception.BusinessException;
 import com.bencao.dto.ChangePasswordRequest;
 import com.bencao.dto.LoginRequest;
 import com.bencao.dto.LoginResponseVO;
+import com.bencao.dto.RegisterRequest;
 import com.bencao.dto.UpdateProfileRequest;
 import com.bencao.dto.UserBriefVO;
 import com.bencao.dto.UserProfileVO;
@@ -16,6 +17,7 @@ import com.bencao.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -43,6 +45,30 @@ public class AuthServiceImpl implements AuthService {
 
         user.setLastLoginTime(LocalDateTime.now());
         sysUserMapper.updateById(user);
+
+        String token = jwtService.createAccessToken(user.getId(), JwtService.AUDIENCE_USER, "user");
+        UserBriefVO brief = new UserBriefVO(user.getId(), user.getNickname(), user.getAvatar());
+        return new LoginResponseVO(token, jwtService.getAccessTokenExpireSeconds(), brief);
+    }
+
+    @Override
+    public LoginResponseVO register(RegisterRequest request) {
+        String phone = request.getPhone().trim();
+        Long exists = sysUserMapper.selectCount(
+                new LambdaQueryWrapper<SysUser>().eq(SysUser::getPhone, phone));
+        if (exists != null && exists > 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "该手机号已注册");
+        }
+
+        SysUser user = new SysUser();
+        user.setPhone(phone);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setNickname(resolveNickname(request.getNickname(), phone));
+        user.setAvatar("");
+        user.setGender(0);
+        user.setStatus(1);
+        user.setLastLoginTime(LocalDateTime.now());
+        sysUserMapper.insert(user);
 
         String token = jwtService.createAccessToken(user.getId(), JwtService.AUDIENCE_USER, "user");
         UserBriefVO brief = new UserBriefVO(user.getId(), user.getNickname(), user.getAvatar());
@@ -98,5 +124,13 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "性别参数无效");
         }
         return gender;
+    }
+
+    private String resolveNickname(String nickname, String phone) {
+        if (StringUtils.hasText(nickname)) {
+            return nickname.trim();
+        }
+        String suffix = phone.length() >= 4 ? phone.substring(phone.length() - 4) : phone;
+        return "本草学员" + suffix;
     }
 }

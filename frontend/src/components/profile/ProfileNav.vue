@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Lock, ShoppingBag, Sunny, User } from '@element-plus/icons-vue'
+import { Lock, ShoppingBag, Star, Sunny, User } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -9,12 +9,13 @@ const items = [
   { key: 'profile', label: '个人资料', path: '/profile?tab=profile', icon: User },
   { key: 'security', label: '账号安全', path: '/profile?tab=security', icon: Lock },
   { key: 'overview', label: '我的概览', path: '/profile?tab=overview', icon: Sunny },
+  { key: 'favorites', label: '我的收藏', path: '/profile?tab=favorites', icon: Star },
   { key: 'orders', label: '我的订单', path: '/market/orders', icon: ShoppingBag },
 ] as const
 
 const activeKey = computed(() => {
   const tab = route.query.tab
-  if (tab === 'security' || tab === 'overview') return tab
+  if (tab === 'security' || tab === 'overview' || tab === 'favorites') return tab
   if (route.path.startsWith('/market/orders')) return 'orders'
   return 'profile'
 })

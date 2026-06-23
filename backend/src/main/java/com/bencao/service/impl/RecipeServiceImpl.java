@@ -47,6 +47,8 @@ public class RecipeServiceImpl extends ServiceImpl<RecipeMapper, Recipe> impleme
         if (recipe == null || recipe.getStatus() == null || recipe.getStatus() != 1) {
             throw new BusinessException(ResultCode.NOT_FOUND);
         }
+        recipe.setViewCount((recipe.getViewCount() == null ? 0 : recipe.getViewCount()) + 1);
+        updateById(recipe);
         return recipe;
     }
 }

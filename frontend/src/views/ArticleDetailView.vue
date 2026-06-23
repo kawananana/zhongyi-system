@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Link, Picture, VideoPlay } from '@element-plus/icons-vue'
+import { ArrowLeft, Link, Picture, Star, VideoPlay } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import HomeHeader from '@/components/home/HomeHeader.vue'
 import { fetchArticleDetail, type ArticleItem } from '@/api/article'
+import { fetchFavoriteCheck, toggleFavorite } from '@/api/favorite'
+import { useUserStore } from '@/store/user'
+import { requireUserLogin } from '@/utils/requireLogin'
 import { categoryLabel } from '@/utils/wikiCategories'
 import { IMAGE_ERROR_PLACEHOLDER } from '@/utils/image'
 import { resolveArticleCover } from '@/utils/articleCover'
@@ -13,11 +17,14 @@ import { resolveSourceUrl } from '@/utils/wikiSource'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 const loading = ref(false)
+const favoriteLoading = ref(false)
+const collected = ref(false)
 const article = ref<ArticleItem | null>(null)
 
 const kindLabel = computed(() =>
-  article.value?.contentKind === 'course' ? '课程' : '文章',
+  article.value?.contentKind === 'course' ? '视频' : '文章',
 )
 
 const gallery = computed(() => parseGalleryJson(article.value?.galleryJson))
@@ -32,12 +39,30 @@ onMounted(async () => {
   loading.value = true
   try {
     article.value = await fetchArticleDetail(id)
+    if (userStore.isLoggedIn() && article.value) {
+      const kind = article.value.contentKind === 'course' ? 'course' : 'article'
+      collected.value = await fetchFavoriteCheck(kind, id)
+    }
   } catch {
     article.value = null
   } finally {
     loading.value = false
   }
 })
+
+async function toggleCollect() {
+  if (!article.value) return
+  if (!requireUserLogin(router, '登录后可收藏')) return
+  const kind = article.value.contentKind === 'course' ? 'course' : 'article'
+  favoriteLoading.value = true
+  try {
+    const res = await toggleFavorite(kind, article.value.id, collected.value ? 'remove' : 'add')
+    collected.value = res.collected
+    ElMessage.success(res.collected ? '已加入收藏' : '已取消收藏')
+  } finally {
+    favoriteLoading.value = false
+  }
+}
 
 function goBack() {
   router.push('/atlas/articles')
@@ -75,11 +100,21 @@ function goBack() {
                 <el-icon><VideoPlay /></el-icon>
                 {{ videos.length }} 视频
               </span>
-              <span class="views">{{ article.viewCount ?? 0 }} 阅读</span>
+              <span class="views">{{ article.viewCount ?? 0 }} 站内阅读</span>
             </div>
             <h1>{{ article.title }}</h1>
             <p class="author-line">
               <span class="author">{{ article.author || '本草萌智编辑部' }}</span>
+              <button
+                type="button"
+                class="collect-btn"
+                :class="{ collected }"
+                :disabled="favoriteLoading"
+                @click="toggleCollect"
+              >
+                <el-icon><Star /></el-icon>
+                {{ collected ? '已收藏' : '收藏' }}
+              </button>
             </p>
 
             <section v-if="article.contentKind === 'course' && videos.length" class="media-section">
@@ -254,6 +289,36 @@ h1 {
   margin: 0 0 24px;
   padding-bottom: 20px;
   border-bottom: 1px solid #f0ebe3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.collect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #d4ebe0;
+  background: #fff;
+  color: #1a5f3f;
+  border-radius: 18px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.collect-btn:hover,
+.collect-btn.collected {
+  background: #f0f7f2;
+  border-color: #1a5f3f;
+}
+
+.collect-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .author {

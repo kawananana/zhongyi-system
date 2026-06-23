@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onActivated, onMounted, ref } from 'vue'
 import HomeHeader from '@/components/home/HomeHeader.vue'
 import HomeCarousel3D from '@/components/home/HomeCarousel3D.vue'
 import CategoryCard from '@/components/home/CategoryCard.vue'
 import HotHerbRank from '@/components/home/HotHerbRank.vue'
 import HomeSidePanel from '@/components/home/HomeSidePanel.vue'
-import HomeConstitutionBot from '@/components/home/HomeConstitutionBot.vue'
 import { fetchHerbPage, type HerbItem } from '@/api/herb'
 import { HERB_CATEGORIES } from '@/utils/herbDisplay'
 
@@ -41,6 +40,8 @@ async function loadHomeData() {
 }
 
 onMounted(loadHomeData)
+
+onActivated(loadHomeData)
 </script>
 
 <template>
@@ -83,8 +84,6 @@ onMounted(loadHomeData)
         </el-row>
       </div>
     </main>
-
-    <HomeConstitutionBot />
   </div>
 </template>
 

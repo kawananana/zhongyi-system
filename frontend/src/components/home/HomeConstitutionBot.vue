@@ -1,59 +1,57 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Close } from '@element-plus/icons-vue'
+import { requireUserLogin } from '@/utils/requireLogin'
 
 const router = useRouter()
-
+const route = useRoute()
 const open = ref(false)
-const hintVisible = ref(false)
-let hintTimer: ReturnType<typeof setTimeout> | undefined
 
-function refreshHint() {
-  hintVisible.value = false
-  if (open.value) return
-  hintTimer = setTimeout(() => {
-    hintVisible.value = true
-  }, 1200)
-}
+const isHerbAtlas = computed(() => {
+  const path = route.path
+  return path === '/atlas/herbs' || (path.startsWith('/atlas/herbs/') && path !== '/atlas/herbs/dice-map')
+})
 
 function togglePanel() {
   open.value = !open.value
-  if (open.value) hintVisible.value = false
 }
 
 function closePanel() {
   open.value = false
-  refreshHint()
 }
 
 function startQuiz() {
   closePanel()
+  if (!requireUserLogin(router, '请先登录后再进行体质测评', '/constitution')) return
   router.push('/constitution')
+}
+
+function goDiceMap() {
+  closePanel()
+  router.push({ path: '/atlas/herbs/dice-map', query: { _r: String(Date.now()) } })
 }
 
 function goStudy() {
   closePanel()
   router.push('/study')
 }
-
-onMounted(refreshHint)
-
-onUnmounted(() => {
-  if (hintTimer) clearTimeout(hintTimer)
-})
 </script>
 
 <template>
+  <Transition name="backdrop">
+    <div v-if="open" class="bot-backdrop" aria-hidden="true" @click="closePanel" />
+  </Transition>
+
   <div class="home-bot" :class="{ open }">
     <Transition name="panel">
-      <aside v-if="open" class="bot-panel" role="dialog" aria-label="体质自测助手">
+      <aside v-if="open" class="bot-panel" role="dialog" aria-label="本草小萌助手">
         <header class="panel-head">
           <div class="panel-title">
             <span class="bot-avatar sm" aria-hidden="true">🤖</span>
             <div>
               <strong>本草小萌</strong>
-              <p>帮你了解自身体质，科学调养</p>
+              <p>{{ isHerbAtlas ? '边走边学，遇见本草' : '帮你了解自身体质，科学调养' }}</p>
             </div>
           </div>
           <button type="button" class="icon-btn" aria-label="关闭" @click="closePanel">
@@ -62,7 +60,15 @@ onUnmounted(() => {
         </header>
 
         <div class="panel-body">
-          <button type="button" class="featured-card" @click="startQuiz">
+          <button v-if="isHerbAtlas" type="button" class="featured-card" @click="goDiceMap">
+            <span class="featured-icon">🗺️</span>
+            <span class="featured-text">
+              <strong>本草寻药地图</strong>
+              <span>掷骰子前进 · 落点学习一味草药 · 每次从头出发</span>
+            </span>
+            <span class="featured-arrow">→</span>
+          </button>
+          <button v-else type="button" class="featured-card" @click="startQuiz">
             <span class="featured-icon">📋</span>
             <span class="featured-text">
               <strong>九体质 20 题自测</strong>
@@ -82,17 +88,11 @@ onUnmounted(() => {
       </aside>
     </Transition>
 
-    <Transition name="hint">
-      <div v-if="!open && hintVisible" class="hint-bubble">
-        测测你的中医体质？
-      </div>
-    </Transition>
-
     <button
       type="button"
       class="fab"
       :aria-expanded="open"
-      aria-label="打开体质自测助手"
+      aria-label="打开小萌助手"
       @click="togglePanel"
     >
       <span class="bot-avatar" aria-hidden="true">🤖</span>
@@ -102,6 +102,24 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.bot-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1199;
+  background: rgba(20, 30, 25, 0.32);
+  backdrop-filter: blur(2px);
+}
+
+.backdrop-enter-active,
+.backdrop-leave-active {
+  transition: opacity 0.22s ease;
+}
+
+.backdrop-enter-from,
+.backdrop-leave-to {
+  opacity: 0;
+}
+
 .home-bot {
   position: fixed;
   right: 24px;
@@ -116,10 +134,18 @@ onUnmounted(() => {
 .bot-panel {
   width: min(320px, calc(100vw - 32px));
   background: #fff;
-  border: 1px solid #e8e4dc;
+  border: 1px solid #c5ddcf;
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(61, 48, 40, 0.18);
   overflow: hidden;
+}
+
+.open .bot-panel {
+  border-color: #1a5f3f;
+  box-shadow:
+    0 20px 56px rgba(26, 95, 63, 0.28),
+    0 0 0 1px rgba(26, 95, 63, 0.14),
+    0 0 0 4px rgba(26, 95, 63, 0.06);
 }
 
 .panel-head {
@@ -258,18 +284,6 @@ onUnmounted(() => {
   color: #909399;
 }
 
-.hint-bubble {
-  max-width: 180px;
-  padding: 8px 12px;
-  border-radius: 14px 14px 4px 14px;
-  background: #fff;
-  border: 1px solid #d4ebe0;
-  box-shadow: 0 4px 16px rgba(26, 95, 63, 0.12);
-  font-size: 12px;
-  color: #303133;
-  line-height: 1.45;
-}
-
 .fab {
   position: relative;
   width: 58px;
@@ -328,17 +342,6 @@ onUnmounted(() => {
   transform: translateY(8px) scale(0.96);
 }
 
-.hint-enter-active,
-.hint-leave-active {
-  transition: opacity 0.25s, transform 0.25s;
-}
-
-.hint-enter-from,
-.hint-leave-to {
-  opacity: 0;
-  transform: translateX(8px);
-}
-
 @keyframes pulse-ring {
   0%,
   100% {
@@ -355,6 +358,10 @@ onUnmounted(() => {
   .home-bot {
     right: 16px;
     bottom: 16px;
+  }
+
+  .bot-panel {
+    width: min(300px, calc(100vw - 24px));
   }
 }
 </style>

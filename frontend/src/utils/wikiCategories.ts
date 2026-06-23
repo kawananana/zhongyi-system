@@ -5,7 +5,7 @@ export interface WikiCategory {
 
 export const WIKI_SIDEBAR_CATEGORIES: WikiCategory[] = [
   { key: 'acupuncture', label: '针灸' },
-  { key: 'moxibustion', label: '艾灸' },
+  { key: 'thermosensitive_moxibustion', label: '热敏灸' },
   { key: 'tuina', label: '推拿' },
   { key: 'cupping', label: '拔罐' },
   { key: 'diet', label: '药膳食疗' },
@@ -15,7 +15,7 @@ export const WIKI_SIDEBAR_CATEGORIES: WikiCategory[] = [
 
 export const WIKI_CONTENT_KINDS = [
   { key: 'article', label: '文章' },
-  { key: 'course', label: '课程' },
+  { key: 'course', label: '视频' },
 ] as const
 
 export type WikiContentKind = (typeof WIKI_CONTENT_KINDS)[number]['key']

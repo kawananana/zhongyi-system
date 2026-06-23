@@ -40,7 +40,7 @@ function excerpt(article: ArticleItem) {
         <div class="rank-name">{{ article.title }}</div>
         <div v-if="excerpt(article)" class="rank-meta">{{ excerpt(article) }}</div>
       </div>
-      <span v-if="article.viewCount" class="view-tag">{{ article.viewCount }} 阅</span>
+      <span class="view-tag">{{ article.viewCount ?? 0 }} 阅</span>
     </div>
   </el-card>
 </template>

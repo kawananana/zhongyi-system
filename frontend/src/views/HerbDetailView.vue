@@ -31,9 +31,12 @@ const detail = computed(() => {
 
 const mainImage = computed(() => herb.value?.images?.[0] || herb.value?.coverImage || '')
 
-const backLabel = computed(() =>
-  route.query.from === 'constitution' ? '← 返回体质测评结果' : '← 返回图鉴',
-)
+const backLabel = computed(() => {
+  if (route.query.from === 'constitution') return '← 返回体质测评结果'
+  if (route.query.from === 'guide') return '← 返回药膳食疗'
+  if (route.query.from === 'dice-map') return '← 返回寻药地图'
+  return '← 返回图鉴'
+})
 
 onMounted(async () => {
   const id = Number(route.params.id)
@@ -51,6 +54,14 @@ onMounted(async () => {
 function goBack() {
   if (route.query.from === 'constitution') {
     router.push('/constitution')
+    return
+  }
+  if (route.query.from === 'guide') {
+    router.push('/guide')
+    return
+  }
+  if (route.query.from === 'dice-map') {
+    router.push('/atlas/herbs/dice-map')
     return
   }
   router.push('/atlas/herbs')

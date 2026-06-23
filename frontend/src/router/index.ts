@@ -15,6 +15,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '本草图鉴' },
   },
   {
+    path: '/atlas/herbs/dice-map',
+    name: 'HerbDiceMap',
+    component: () => import('@/views/HerbDiceMapView.vue'),
+    meta: { title: '本草寻药地图' },
+  },
+  {
     path: '/atlas/herbs/:id',
     name: 'HerbDetail',
     component: () => import('@/views/HerbDetailView.vue'),
@@ -66,7 +72,7 @@ const routes: RouteRecordRaw[] = [
     path: '/constitution',
     name: 'Constitution',
     component: () => import('@/views/ConstitutionView.vue'),
-    meta: { title: '体质自测' },
+    meta: { title: '体质自测', requiresAuth: true },
   },
   {
     path: '/wellness/constitution',
@@ -101,6 +107,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '购物车' },
   },
   {
+    path: '/market/checkout',
+    name: 'MarketCheckout',
+    component: () => import('@/views/MarketCheckoutView.vue'),
+    meta: { title: '确认订单', requiresAuth: true },
+  },
+  {
     path: '/market/orders',
     name: 'MarketOrders',
     component: () => import('@/views/MarketOrdersView.vue'),
@@ -125,6 +137,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '用户登录' },
   },
   {
+    path: '/register',
+    name: 'UserRegister',
+    component: () => import('@/views/UserRegisterView.vue'),
+    meta: { title: '用户注册' },
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/ProfileView.vue'),
@@ -135,6 +153,12 @@ const routes: RouteRecordRaw[] = [
     name: 'AdminLogin',
     component: () => import('@/views/admin/AdminLoginView.vue'),
     meta: { title: '管理员登录' },
+  },
+  {
+    path: '/admin/acupoint-3d',
+    name: 'AdminAcupoint3D',
+    component: () => import('@/modules/3d-zhenjiu/AdminPage.vue'),
+    meta: { title: '3D穴位管理' },
   },
   {
     path: '/admin',
@@ -149,22 +173,40 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '图鉴管理' },
       },
       {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/DashboardView.vue'),
+        meta: { title: '数据看板' },
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: () => import('@/views/admin/UserManageView.vue'),
+        meta: { title: '学员管理' },
+      },
+      {
         path: 'products',
         name: 'AdminProducts',
         component: () => import('@/views/admin/ProductManageView.vue'),
-        meta: { title: '商品管理' },
+        meta: { title: '市集商品' },
+      },
+      {
+        path: 'orders',
+        name: 'AdminOrders',
+        component: () => import('@/views/admin/OrderManageView.vue'),
+        meta: { title: '订单管理' },
+      },
+      {
+        path: 'returns',
+        name: 'AdminReturns',
+        component: () => import('@/views/admin/ReturnManageView.vue'),
+        meta: { title: '退货审核' },
       },
       {
         path: 'forum',
         name: 'AdminForum',
         component: () => import('@/views/admin/ForumManageView.vue'),
         meta: { title: '论坛管控' },
-      },
-      {
-        path: 'dashboard',
-        name: 'AdminDashboard',
-        component: () => import('@/views/admin/DashboardView.vue'),
-        meta: { title: '数据看板' },
       },
     ],
   },

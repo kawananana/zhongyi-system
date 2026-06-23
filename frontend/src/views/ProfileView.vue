@@ -13,6 +13,7 @@ import {
   Sunny,
 } from '@element-plus/icons-vue'
 import ProfilePageShell from '@/components/profile/ProfilePageShell.vue'
+import ProfileFavoritesPanel from '@/components/profile/ProfileFavoritesPanel.vue'
 import {
   AVATAR_PRESETS,
   GENDER_OPTIONS,
@@ -34,7 +35,7 @@ import {
   loadDailyLogs,
 } from '@/utils/wellnessStorage'
 
-type ProfileTab = 'profile' | 'security' | 'overview'
+type ProfileTab = 'profile' | 'security' | 'overview' | 'favorites'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,7 +63,7 @@ const pwdForm = reactive({
 
 const activeTab = computed<ProfileTab>(() => {
   const tab = route.query.tab
-  if (tab === 'security' || tab === 'overview') return tab
+  if (tab === 'security' || tab === 'overview' || tab === 'favorites') return tab
   return 'profile'
 })
 
@@ -201,7 +202,7 @@ function formatDateTime(value?: string | null) {
 watch(
   () => route.query.tab,
   (tab) => {
-    if (tab !== 'profile' && tab !== 'security' && tab !== 'overview' && route.path === '/profile') {
+    if (tab !== 'profile' && tab !== 'security' && tab !== 'overview' && tab !== 'favorites' && route.path === '/profile') {
       router.replace({ path: '/profile', query: { tab: 'profile' } })
     }
   },
@@ -325,6 +326,8 @@ onMounted(loadProfile)
           </el-form-item>
         </el-form>
       </section>
+
+      <ProfileFavoritesPanel v-else-if="activeTab === 'favorites'" />
 
       <section v-else class="panel">
         <div class="panel-head">

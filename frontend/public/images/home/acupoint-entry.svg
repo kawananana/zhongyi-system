@@ -1,17 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#2d4a3e"/>
-      <stop offset="100%" stop-color="#1a3328"/>
+    <linearGradient id="sceneBg" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#3a4248"/>
+      <stop offset="55%" stop-color="#272b31"/>
+      <stop offset="100%" stop-color="#1e2228"/>
     </linearGradient>
+    <radialGradient id="floorGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4a5560" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#272b31" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="skinLight" x1="0.25" y1="0" x2="0.85" y2="1">
+      <stop offset="0%" stop-color="#f0d5bc"/>
+      <stop offset="45%" stop-color="#d4a882"/>
+      <stop offset="100%" stop-color="#9a7358"/>
+    </linearGradient>
+    <linearGradient id="skinShadow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7a5a45"/>
+      <stop offset="50%" stop-color="#c9a078"/>
+      <stop offset="100%" stop-color="#edd2b8"/>
+    </linearGradient>
+    <filter id="pointGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
   </defs>
-  <rect width="400" height="220" fill="url(#bg)"/>
-  <ellipse cx="200" cy="72" rx="28" ry="32" fill="#c9a882" opacity="0.9"/>
-  <path d="M200 104 L200 168 M168 120 L232 120 M180 168 L220 168" stroke="#8fbc9a" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="200" cy="56" r="4" fill="#e8c547"/>
-  <circle cx="200" cy="88" r="3" fill="#e8c547"/>
-  <circle cx="200" cy="118" r="3" fill="#e8c547"/>
-  <circle cx="168" cy="120" r="3" fill="#e8c547"/>
-  <circle cx="232" cy="120" r="3" fill="#e8c547"/>
-  <text x="200" y="200" text-anchor="middle" fill="#a8d4b8" font-family="sans-serif" font-size="14">3D 经络 · 针灸模型</text>
+
+  <rect width="640" height="360" fill="url(#sceneBg)"/>
+  <ellipse cx="320" cy="332" rx="210" ry="28" fill="url(#floorGlow)"/>
+
+  <!-- 3D 人体模型（正面略侧，模拟 OBJ 预览） -->
+  <g filter="url(#softShadow)" transform="translate(320 178)">
+    <!-- 头 -->
+    <ellipse cx="0" cy="-118" rx="34" ry="40" fill="url(#skinLight)"/>
+    <ellipse cx="-8" cy="-122" rx="12" ry="16" fill="#edd2b8" opacity="0.45"/>
+    <!-- 颈 -->
+    <path d="M-12 -78 L12 -78 L10 -62 L-10 -62 Z" fill="url(#skinShadow)"/>
+    <!-- 躯干 -->
+    <path d="M-46 -62 C-52 -10 -48 42 -38 78 L38 78 C48 42 52 -10 46 -62 C34 -68 0 -70 -46 -62 Z" fill="url(#skinLight)"/>
+    <path d="M-18 -58 C-8 -20 -6 24 -10 72 L10 72 C6 24 8 -20 18 -58 C10 -62 0 -63 -18 -58 Z" fill="#b88462" opacity="0.22"/>
+    <!-- 肩臂 -->
+    <path d="M-46 -58 C-78 -48 -92 -10 -88 24 C-84 52 -72 68 -58 72 L-42 58 C-54 34 -58 8 -52 -18 C-48 -38 -44 -52 -46 -58 Z" fill="url(#skinShadow)"/>
+    <path d="M46 -58 C78 -48 92 -10 88 24 C84 52 72 68 58 72 L42 58 C54 34 58 8 52 -18 C48 -38 44 -52 46 -58 Z" fill="url(#skinLight)"/>
+    <!-- 腿 -->
+    <path d="M-34 78 L-42 168 L-18 168 L-8 78 Z" fill="url(#skinShadow)"/>
+    <path d="M34 78 L42 168 L18 168 L8 78 Z" fill="url(#skinLight)"/>
+    <!-- 经络示意线 -->
+    <path d="M0 -118 C-8 -40 -6 20 0 92" stroke="#6ecf9a" stroke-width="1.6" stroke-opacity="0.55" stroke-linecap="round"/>
+    <path d="M-28 -52 C-34 10 -30 72 -22 120" stroke="#58b888" stroke-width="1.2" stroke-opacity="0.4" stroke-linecap="round"/>
+    <path d="M28 -52 C34 10 30 72 22 120" stroke="#58b888" stroke-width="1.2" stroke-opacity="0.4" stroke-linecap="round"/>
+    <!-- 穴位亮点 -->
+    <g filter="url(#pointGlow)">
+      <circle cx="0" cy="-132" r="4.5" fill="#ffd86b"/>
+      <circle cx="0" cy="-92" r="4" fill="#ffd86b"/>
+      <circle cx="0" cy="-34" r="4.2" fill="#ffd86b"/>
+      <circle cx="0" cy="18" r="4" fill="#ffd86b"/>
+      <circle cx="0" cy="58" r="3.8" fill="#ffd86b"/>
+      <circle cx="-24" cy="-48" r="3.6" fill="#ffd86b"/>
+      <circle cx="24" cy="-48" r="3.6" fill="#ffd86b"/>
+      <circle cx="-58" cy="8" r="3.4" fill="#ffd86b"/>
+      <circle cx="58" cy="8" r="3.4" fill="#ffd86b"/>
+      <circle cx="-24" cy="132" r="3.6" fill="#ffd86b"/>
+      <circle cx="24" cy="132" r="3.6" fill="#ffd86b"/>
+    </g>
+    <!-- 穴位外圈 -->
+    <g opacity="0.75">
+      <circle cx="0" cy="-132" r="7" stroke="#ffd86b" stroke-width="1" fill="none" opacity="0.45"/>
+      <circle cx="0" cy="-34" r="7" stroke="#ffd86b" stroke-width="1" fill="none" opacity="0.45"/>
+      <circle cx="-24" cy="132" r="6.5" stroke="#ffd86b" stroke-width="1" fill="none" opacity="0.4"/>
+      <circle cx="24" cy="132" r="6.5" stroke="#ffd86b" stroke-width="1" fill="none" opacity="0.4"/>
+    </g>
+  </g>
+
+  <!-- 右下角 3D 视角提示 -->
+  <g opacity="0.85">
+    <path d="M548 292 L582 268 L582 292 Z" fill="#8fbc9a" opacity="0.35"/>
+    <path d="M548 292 L582 292 L582 316 L548 292 Z" fill="#6ecf9a" opacity="0.25"/>
+    <path d="M582 268 L582 316 L548 292 Z" fill="#4a9a72" opacity="0.2"/>
+  </g>
 </svg>

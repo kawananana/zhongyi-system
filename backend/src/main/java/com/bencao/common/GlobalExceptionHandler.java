@@ -10,6 +10,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
 
@@ -64,6 +65,11 @@ public class GlobalExceptionHandler {
                 : ex.getMessage();
         return Result.fail(ResultCode.INTERNAL_ERROR.getCode(),
                 "数据库异常，请确认已执行最新 SQL 脚本（如 patch_article_wiki_columns.sql）: " + hint);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Result<Void> handleNoResource(NoResourceFoundException ex) {
+        return Result.fail(ResultCode.NOT_FOUND.getCode(), "接口不存在，请重启后端服务后再试");
     }
 
     @ExceptionHandler(Exception.class)

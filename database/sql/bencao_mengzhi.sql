@@ -24,9 +24,12 @@ DROP TABLE IF EXISTS `forum_comment`;
 DROP TABLE IF EXISTS `forum_post_like`;
 DROP TABLE IF EXISTS `forum_post`;
 DROP TABLE IF EXISTS `order_item`;
+DROP TABLE IF EXISTS `order_return_request`;
 DROP TABLE IF EXISTS `shop_order`;
 DROP TABLE IF EXISTS `cart_item`;
 DROP TABLE IF EXISTS `recipe_ingredient`;
+DROP TABLE IF EXISTS `user_recipe_favorite`;
+DROP TABLE IF EXISTS `user_article_favorite`;
 DROP TABLE IF EXISTS `user_herb_favorite`;
 DROP TABLE IF EXISTS `user_health_archive`;
 DROP TABLE IF EXISTS `user_points`;
@@ -306,6 +309,22 @@ CREATE TABLE `order_item` (
     CONSTRAINT `fk_order_item_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单明细表';
 
+CREATE TABLE `order_return_request` (
+    `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '退货申请ID',
+    `order_id`       BIGINT UNSIGNED NOT NULL COMMENT '订单ID',
+    `user_id`        BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    `reason`         VARCHAR(500)    NOT NULL COMMENT '退货原因',
+    `status`         TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '0待审核 1已同意 2已拒绝',
+    `admin_remark`   VARCHAR(500)    NOT NULL DEFAULT '' COMMENT '审核备注',
+    `create_time`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
+    `update_time`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `audit_time`     DATETIME        DEFAULT NULL COMMENT '审核时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_order_id` (`order_id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单退货申请表';
+
 -- -----------------------------------------------------------------------------
 -- 玩 · 萌智趣学 + 社区（P4）
 -- -----------------------------------------------------------------------------
@@ -424,6 +443,26 @@ CREATE TABLE `user_herb_favorite` (
     CONSTRAINT `fk_favorite_user` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_favorite_herb` FOREIGN KEY (`herb_id`) REFERENCES `herb` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户药匣收藏表';
+
+CREATE TABLE `user_article_favorite` (
+    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
+    `user_id`     BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    `article_id`  BIGINT UNSIGNED NOT NULL COMMENT '百科文章/课程ID',
+    `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_article` (`user_id`, `article_id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户百科收藏表';
+
+CREATE TABLE `user_recipe_favorite` (
+    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '收藏ID',
+    `user_id`     BIGINT UNSIGNED NOT NULL COMMENT '用户ID',
+    `recipe_id`   BIGINT UNSIGNED NOT NULL COMMENT '药膳食谱ID',
+    `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_recipe` (`user_id`, `recipe_id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户药膳收藏表';
 
 -- -----------------------------------------------------------------------------
 -- P6 · 后台管理与系统治理
@@ -595,54 +634,40 @@ INSERT INTO `recipe_ingredient` (`recipe_id`, `ingredient_name`, `dosage`, `sort
 
 -- 本草市集商品（category 与前端 marketCategories 一致；detail 格式：【标签】| 规格：… | 说明）
 INSERT INTO `product` (
-    `product_name`, `herb_id`, `category`, `price`, `stock`, `cover_image`, `detail`, `sales_count`, `status`
+    `id`, `product_name`, `herb_id`, `category`, `price`, `stock`, `cover_image`, `detail`, `sales_count`, `status`
 ) VALUES
--- 养生茶疗
-('杭白菊枸杞茶', NULL, 'tea_therapy', 36.80, 420, '/images/market/tea_therapy.svg', '【养生茶疗】| 规格：15袋×5g | 桐乡杭白菊配宁夏枸杞，独立茶包，清肝火明目，办公室冲泡方便。', 2340, 1),
-('玫瑰红枣桂圆茶', NULL, 'tea_therapy', 42.00, 380, '/images/market/b3e0b584f68715205cd6f2f2c6ab20ce_720.png', '【养生茶疗】| 规格：20袋×8g | 平阴玫瑰、新疆红枣、莆田桂圆，暖宫养血，女性日常调理。', 1876, 1),
-('新会陈皮普洱茶', 6, 'tea_therapy', 68.00, 260, 'https://picsum.photos/seed/chenpi-puer/400/400', '【养生茶疗】| 规格：罐装250g | 广东新会陈皮拼云南熟普，理气健脾、消食解腻，耐泡回甘。', 956, 1),
--- 艾灸艾柱
-('蕲春三年陈艾柱', NULL, 'moxibustion', 58.00, 350, 'https://picsum.photos/seed/qichun-moxa/400/400', '【艾灸艾柱】| 规格：54粒×1.8cm | 湖北蕲春艾叶，三年陈化，烟少味醇，适配标准艾灸盒。', 3210, 1),
-('无烟艾条', NULL, 'moxibustion', 45.00, 480, 'https://picsum.photos/seed/moxa-stick-bar/400/400', '【艾灸艾柱】| 规格：10支×18mm | 低烟配方艾条，悬灸、隔姜灸均可，居家常备。', 2788, 1),
-('艾灸盒随身套装', NULL, 'moxibustion', 89.00, 180, 'https://picsum.photos/seed/moxa-kit/400/400', '【艾灸艾柱】| 规格：1盒+54粒艾柱 | 不锈钢随身灸盒、隔热垫、固定带及艾柱，新手入门套装。', 1543, 1),
--- 中医护肤
-('当归草本润唇膏', 2, 'skincare', 39.90, 520, 'https://picsum.photos/seed/angelica-lip/400/400', '【中医护肤】| 规格：3.5g/支 | 当归提取物+天然蜂蜡，无香精色素，缓解唇部干裂。', 1654, 1),
-('黄芪保湿面膜', 4, 'skincare', 79.00, 300, 'https://picsum.photos/seed/astragalus-mask/400/400', '【中医护肤】| 规格：5片×25ml | 黄芪多糖精华液膜布，补气固表，改善暗沉粗糙。', 892, 1),
-('珍珠粉洁面乳', NULL, 'skincare', 56.00, 240, 'https://picsum.photos/seed/pearl-cleanser/400/400', '【中医护肤】| 规格：100ml | 水解珍珠粉配伍氨基酸表活，温和清洁不紧绷。', 743, 1),
--- 中医书籍
-('《黄帝内经》白话图解', NULL, 'books', 68.00, 200, 'https://picsum.photos/seed/huangdi-book/400/400', '【中医书籍】| 规格：精装16开 | 彩色插图+白话注解，中医入门经典，附经络概览图。', 1280, 1),
-('《针灸学》教材精编', NULL, 'books', 45.00, 320, 'https://picsum.photos/seed/acupuncture-textbook/400/400', '【中医书籍】| 规格：平装 | 十四经脉穴位定位、针刺手法要点，配真人取穴彩图。', 876, 1),
-('《中药学》速查手册', NULL, 'books', 32.00, 450, 'https://picsum.photos/seed/tcm-herb-handbook/400/400', '【中医书籍】| 规格：口袋本 | 常用药材性味归经、功效主治速查，实习备考实用。', 654, 1),
--- 药食同源
-('桑葚山楂块', NULL, 'food_medicine', 39.90, 800, '/images/market/b3e0b584f68715205cd6f2f2c6ab20ce_720.png', '【药食同源】| 规格：220g/盒 | 桑葚、山楂实材冷压成型，酸甜软糯，健脾消食，独立小包装。', 5680, 1),
-('党参黄芪牛肉粒', NULL, 'food_medicine', 68.00, 450, '/images/market/65a4d09b25782d71c0029f4aa9549256_720.png', '【药食同源】| 规格：120g/袋 | 党参、黄芪入膳牛肉粒，高蛋白即食，补气养血，健身代餐。', 4230, 1),
-('桑葚山楂块', NULL, 'food_medicine', 39.90, 800, '/images/market/b3e0b584f68715205cd6f2f2c6ab20ce_720.png', '【药食同源】| 规格：220g/盒 | 桑葚、山楂实材冷压成型，酸甜软糯，健脾消食，独立小包装。', 5680, 1),
-('艾叶红花泡脚包', NULL, 'foot_therapy', 39.90, 700, '/images/market/fd16a2b13332d4a635895a18c03306f7_720.png', '【养生足疗】| 规格：30包×30g | 蕲春艾叶配红花、干姜，睡前泡脚20分钟，温经助眠。', 5120, 1),
-('水牛角刮痧板', NULL, 'physio_tools', 35.00, 600, '/images/market/1eec53851cda1a2c6197406d79b29ace.png', '【理疗工具】| 规格：约12cm | 天然水牛角打磨，薄边设计，面部背部经络疏通，配刮痧油。', 4560, 1),
-('甘肃黄芪片', 4, 'decoction', 48.00, 800, '/images/market/f8707b9bd50fa496cb0607e54b6f0ff6_720.png', '【滋补饮片】| 规格：100g/罐 | 岷县黄芪斜切片，豆腥味浓，煲汤泡茶，补气升阳。', 4560, 1),
-('四神小棍', NULL, 'food_medicine', 29.90, 920, 'https://picsum.photos/seed/sishen-stick/400/400', '【药食同源】| 规格：320g/罐 | 茯苓、莲子、山药、芡实研磨成型，健脾祛湿，儿童老人皆宜。', 3890, 1),
-('红枣枸杞核桃糕', 3, 'food_medicine', 48.00, 360, 'https://picsum.photos/seed/jujube-goji-cake/400/400', '【药食同源】| 规格：500g/盒 | 宁夏枸杞、新疆红枣、核桃仁，软糯不粘牙，滋补肝肾。', 2156, 1),
--- 膏方系列
-('川贝秋梨膏', NULL, 'herbal_paste', 78.00, 280, 'https://picsum.photos/seed/pear-paste/400/400', '【膏方系列】| 规格：300g/瓶 | 川贝母、秋梨、蜂蜜慢火熬制，润肺止咳，秋冬咽干适用。', 3450, 1),
-('九蒸九晒黑芝麻丸', NULL, 'herbal_paste', 59.90, 400, 'https://picsum.photos/seed/black-sesame-ball/400/400', '【膏方系列】| 规格：罐装200g | 传统九蒸九晒黑芝麻，补肾乌发，每日2丸即食。', 2876, 1),
-('固本膏', NULL, 'herbal_paste', 128.00, 120, 'https://picsum.photos/seed/guben-paste/400/400', '【膏方系列】| 规格：150g/盒 | 人参、黄芪、枸杞等配伍膏方，大补元气，体虚乏力者调理。', 1543, 1),
--- 理疗工具
-('水牛角刮痧板', NULL, 'physio_tools', 35.00, 600, '/images/market/1eec53851cda1a2c6197406d79b29ace.png', '【理疗工具】| 规格：约12cm | 天然水牛角打磨，薄边设计，面部背部经络疏通，配刮痧油。', 4560, 1),
-('真空拔罐器12罐装', NULL, 'physio_tools', 49.90, 380, 'https://picsum.photos/seed/cupping-set/400/400', '【理疗工具】| 规格：12罐+抽气枪 | 家用真空拔罐，透明罐体，肩背腰腿祛湿活血。', 2340, 1),
-('经络按摩刷', NULL, 'physio_tools', 28.00, 520, 'https://picsum.photos/seed/meridian-brush/400/400', '【理疗工具】| 规格：1把 | 树脂梳齿经络刷，腿臂腹部推拿，配合精油使用。', 1876, 1),
--- 养生足疗
-('党参黄芪牛肉粒', NULL, 'food_medicine', 68.00, 450, '/images/market/65a4d09b25782d71c0029f4aa9549256_720.png', '【药食同源】| 规格：120g/袋 | 党参、黄芪入膳牛肉粒，高蛋白即食，补气养血，健身代餐。', 4230, 1),
-('老姜足浴包', NULL, 'foot_therapy', 29.90, 650, 'https://picsum.photos/seed/ginger-foot-soak/400/400', '【养生足疗】| 规格：20包 | 云南小黄姜切片烘干，驱寒暖足，手脚冰凉者适用。', 3890, 1),
-('藏红花足浴盐', NULL, 'foot_therapy', 45.00, 300, 'https://picsum.photos/seed/saffron-foot-salt/400/400', '【养生足疗】| 规格：500g/袋 | 藏红花、海盐、艾叶粉，溶解快，活血通络，缓解疲劳。', 1654, 1),
--- 精品礼盒
-('四季养生礼盒', NULL, 'gift_box', 198.00, 120, 'https://picsum.photos/seed/season-gift-box/400/400', '【精品礼盒】| 规格：茶+膏+足浴各1 | 菊花枸杞茶、秋梨膏、艾叶泡脚包组合，节日探亲送礼。', 876, 1),
-('宁夏枸杞礼盒', 3, 'gift_box', 158.00, 150, 'https://picsum.photos/seed/goji-gift-box/400/400', '【精品礼盒】| 规格：特级枸杞500g×2罐 | 中宁头茬枸杞，粒大饱满，滋补肝肾，精美礼盒装。', 1230, 1),
-('银耳莲子羹礼盒', NULL, 'gift_box', 88.00, 200, 'https://picsum.photos/seed/tremella-gift/400/400', '【精品礼盒】| 规格：6碗装 | 古田银耳、建宁莲子即食羹，滋阴润肺，开盖即食。', 987, 1),
--- 滋补饮片
-('甘肃黄芪片', 4, 'decoction', 48.00, 800, '/images/market/f8707b9bd50fa496cb0607e54b6f0ff6_720.png', '【滋补饮片】| 规格：100g/罐 | 岷县黄芪斜切片，豆腥味浓，煲汤泡茶，补气升阳。', 4560, 1),
-('岷县当归头片', 2, 'decoction', 52.00, 650, 'https://picsum.photos/seed/angelica-slice/400/400', '【滋补饮片】| 规格：100g | 甘肃岷县当归头片，油圈明显，补血活血，妇科常用。', 3890, 1),
-('宁夏枸杞王', 3, 'decoction', 68.00, 500, 'https://picsum.photos/seed/goji-berry-dry/400/400', '【滋补饮片】| 规格：250g/袋 | 中宁特级大果枸杞，干燥饱满，泡茶嚼食，滋补肝肾。', 3210, 1),
-('文山三七粉', NULL, 'decoction', 128.00, 200, 'https://picsum.photos/seed/panax-powder/400/400', '【滋补饮片】| 规格：50g/瓶 | 云南文山春三七超细粉，活血化瘀，跌打损伤及心脑血管养护。', 2156, 1);
+(22, '【养生茶疗】新会陈皮普洱茶', NULL, 'tea_therapy', 68.00, 260, '/images/market/ff4269e9bc6867844d0c43a362b981bc_720.png', '【养生茶疗】| 规格：罐装250g | 广东新会陈皮拼云南熟普，理气健脾、消食解腻，耐泡回甘。', 956, 1),
+(23, '【养生茶疗】玫瑰红枣桂圆茶', NULL, 'tea_therapy', 42.00, 380, '/images/market/c8257482d8cfd1cb436031b9c141ab1d_720.png', '【养生茶疗】| 规格：20袋×8g | 平阴玫瑰、新疆红枣、莆田桂圆，暖宫养血，女性日常调理。', 1876, 1),
+(24, '【养生茶疗】杭白菊枸杞茶', NULL, 'tea_therapy', 36.80, 420, '/images/market/8f8096c8a454a9fb2e06cd0b72c00f5f_720.png', '【养生茶疗】| 规格：15袋×5g | 桐乡杭白菊配宁夏枸杞，独立茶包，清肝火明目，办公室冲泡方便。', 2340, 1),
+(25, '【艾灸艾柱】无烟艾条', NULL, 'moxibustion', 45.00, 480, '/images/market/007c5532699b5bc59bacec57e86af325_720.png', '【艾灸艾柱】| 规格：10支×18mm | 低烟配方艾条，悬灸、隔姜灸均可，居家常备。', 2788, 1),
+(26, '【理疗工具】真空拔罐器12罐装', NULL, 'physio_tools', 49.90, 380, '/images/market/dd112defab4e057ceee8910744acebc6_720.png', '【理疗工具】| 规格：12罐+抽气枪 | 家用真空拔罐，透明罐体，肩背腰腿祛湿活血。', 2340, 1),
+(27, '【艾灸艾柱】蕲春三年陈艾柱', NULL, 'moxibustion', 58.00, 350, '/images/market/35d66bc96c800f2170cf3157ade0db99_720.png', '【艾灸艾柱】| 规格：54粒×1.8cm | 湖北蕲春艾叶，三年陈化，烟少味醇，适配标准艾灸盒。', 3210, 1),
+(28, '【中医护肤】珍珠粉洁面乳', NULL, 'skincare', 56.00, 240, '/images/market/d6adb798ec2882ded5002805f9cc4cd9_720.png', '【中医护肤】| 规格：100ml | 水解珍珠粉配伍氨基酸表活，温和清洁不紧绷。', 743, 1),
+(29, '【中医护肤】当归草本润唇膏', 2, 'skincare', 39.90, 520, '/images/market/a57b460fc1a1f53f3da1de3beda3fe2a.png', '【中医护肤】| 规格：3.5g/支 | 当归提取物+天然蜂蜡，无香精色素，缓解唇部干裂。', 1654, 1),
+(30, '【养生足疗】藏红花足浴盐', NULL, 'foot_therapy', 45.00, 300, '/images/market/0e69dd54e44fd6bede571055d184828e_720.png', '【养生足疗】| 规格：500g/袋 | 藏红花、海盐、艾叶粉，溶解快，活血通络，缓解疲劳。', 1654, 1),
+(31, '【中医书籍】《黄帝内经》白话图解', NULL, 'books', 68.00, 200, '/images/market/41cda2b432609cbb580ee0b16d3f1fc2_720.png', '【中医书籍】| 规格：精装16开 | 彩色插图+白话注解，中医入门经典，附经络概览图。', 1280, 1),
+(32, '【中医书籍】《针灸学》教材精编', NULL, 'books', 45.00, 320, '/images/market/a02dc77f84b4438518ea04c6b16b2b2d.png', '【中医书籍】| 规格：平装 | 十四经脉穴位定位、针刺手法要点，配真人取穴彩图。', 876, 1),
+(33, '【中医书籍】《中药学》速查手册', NULL, 'books', 32.00, 450, '/images/market/71ed5b661cab202750abe2297476ee05_720.png', '【中医书籍】| 规格：口袋本 | 常用药材性味归经、功效主治速查，实习备考实用。', 654, 1),
+(34, '【精品礼盒】四季养生礼包', NULL, 'gift_box', 198.00, 120, '/images/market/5bf2622047023018775b6a7eca1f1331_720.png', '【精品礼盒】| 规格：茶+膏+足浴各1 | 精选菊花枸杞茶、秋梨膏、艾叶泡脚包等养生组合，兼顾四季调理，适合节日探亲送礼与家庭日常滋养。', 876, 1),
+(35, '宁夏枸杞王', 3, 'decoction', 68.00, 500, '/images/market/1dbc42c8c444d8d8f591402c2fca4dbe_720.png', '【滋补饮片】| 规格：250g/袋 | 中宁特级大果枸杞，干燥饱满，泡茶嚼食，滋补肝肾。', 3210, 1),
+(36, '四神小棍', NULL, 'food_medicine', 29.90, 920, '/images/market/63aa3a9d55c0bf2f71f8a75128cf0175_720.png', '【药食同源】| 规格：320g/罐 | 茯苓、莲子、山药、芡实研磨成型，健脾祛湿，儿童老人皆宜。', 3890, 1),
+(37, '红枣枸杞核桃糕', 3, 'food_medicine', 48.00, 360, '/images/market/1197146ea0ac102e688a9649998acfa4_720.png', '【药食同源】| 规格：500g/盒 | 宁夏枸杞、新疆红枣、核桃仁，软糯不粘牙，滋补肝肾。', 2156, 1),
+(38, '党参黄芪牛肉粒', NULL, 'food_medicine', 68.00, 450, '/images/market/65a4d09b25782d71c0029f4aa9549256_720.png', '【药食同源】| 规格：120g/袋 | 党参、黄芪入膳牛肉粒，高蛋白即食，补气养血，健身代餐。', 4230, 1),
+(39, '桑葚山楂块', NULL, 'food_medicine', 39.90, 800, '/images/market/b3e0b584f68715205cd6f2f2c6ab20ce_720.png', '【药食同源】| 规格：220g/盒 | 桑葚、山楂实材冷压成型，酸甜软糯，健脾消食，独立小包装。', 5680, 1),
+(40, '固本膏', NULL, 'herbal_paste', 128.00, 120, '/images/market/3e300f1b11bbdf8f935d5707a0437564_720.png', '【膏方系列】| 规格：150g/盒 | 人参、黄芪、枸杞等配伍膏方，大补元气，体虚乏力者调理。', 1543, 1),
+(41, '经络按摩刷', NULL, 'physio_tools', 28.00, 520, '/images/market/8a90a25bca3cd615b0cb189971c52412.png', '【理疗工具】| 规格：1把 | 树脂梳齿经络刷，腿臂腹部推拿，配合精油使用。', 1876, 1),
+(42, '艾灸盒随身套装', NULL, 'moxibustion', 89.00, 180, '/images/market/be0492964364e53833d1d5a7a164e960.png', '【艾灸艾柱】| 规格：1盒+54粒艾柱 | 不锈钢随身灸盒、隔热垫、固定带及艾柱，新手入门套装。', 1543, 1),
+(43, '水牛角刮痧板', NULL, 'physio_tools', 35.00, 600, '/images/market/1eec53851cda1a2c6197406d79b29ace.png', '【理疗工具】| 规格：约12cm | 天然水牛角打磨，薄边设计，面部背部经络疏通，配刮痧油。', 4560, 1),
+(44, '老姜足浴包', NULL, 'foot_therapy', 29.90, 650, '/images/market/image.png', '【养生足疗】| 规格：20包 | 云南小黄姜切片烘干，驱寒暖足，手脚冰凉者适用。', 3890, 1),
+(45, '岷县当归头片', 2, 'decoction', 52.00, 650, '/images/market/790f13be76e7845319b3eb62d6370ef7_720.png', '【滋补饮片】| 规格：100g | 甘肃岷县当归头片，油圈明显，补血活血，妇科常用。', 3890, 1),
+(46, '川贝秋梨膏', NULL, 'herbal_paste', 78.00, 280, '/images/market/06dec9289a763fc76363707196d032ef_720.png', '【膏方系列】| 规格：300g/瓶 | 川贝母、秋梨、蜂蜜慢火熬制，润肺止咳，秋冬咽干适用。', 3450, 1),
+(47, '文山三七粉', NULL, 'decoction', 128.00, 200, '/images/market/cba6903d394669fabfc3576317030e1a_720.png', '【滋补饮片】| 规格：50g/瓶 | 云南文山春三七超细粉，活血化瘀，跌打损伤及心脑血管养护。', 2156, 1),
+(48, '宁夏枸杞礼盒', 3, 'gift_box', 158.00, 150, '/images/market/d9d83aad2390f98da79df53f32507499_720.png', '【精品礼盒】| 规格：特级枸杞500g×2罐 | 中宁头茬枸杞，粒大饱满，滋补肝肾，精美礼盒装。', 1230, 1),
+(49, '九蒸九晒黑芝麻丸', NULL, 'herbal_paste', 59.90, 400, '/images/market/9ede45651bced3f310f52ac55271325f_720.png', '【膏方系列】| 规格：罐装200g | 传统九蒸九晒黑芝麻，补肾乌发，每日2丸即食。', 2876, 1),
+(50, '甘肃黄芪片', 4, 'decoction', 48.00, 800, '/images/market/f8707b9bd50fa496cb0607e54b6f0ff6_720.png', '【滋补饮片】| 规格：100g/罐 | 岷县黄芪斜切片，豆腥味浓，煲汤泡茶，补气升阳。', 4560, 1),
+(51, '艾叶红花泡脚包', NULL, 'foot_therapy', 39.90, 700, '/images/market/fd16a2b13332d4a635895a18c03306f7_720.png', '【养生足疗】| 规格：30包×30g | 蕲春艾叶配红花、干姜，睡前泡脚20分钟，温经助眠。', 5120, 1),
+(52, '《黄帝内经》白话图解', NULL, 'books', 68.00, 200, '/images/market/41cda2b432609cbb580ee0b16d3f1fc2_720.png', '【中医书籍】| 规格：精装16开 | 彩色插图+白话注解，中医入门经典，附经络概览图。', 1280, 1),
+(53, '银耳莲子羹礼盒', NULL, 'gift_box', 88.00, 200, '/images/market/54c8dffa0e05b4c168547b57eccf571c.png', '【精品礼盒】| 规格：6碗装 | 古田银耳、建宁莲子即食羹，滋阴润肺，开盖即食。', 987, 1);
 
 -- 后台管理员（开发环境：admin / password，BCrypt）
 INSERT INTO `admin_user` (`username`, `password`, `role`, `status`) VALUES

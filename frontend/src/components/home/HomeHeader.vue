@@ -49,6 +49,10 @@ function goLogin() {
   router.push('/login')
 }
 
+function goRegister() {
+  router.push('/register')
+}
+
 function goProfile() {
   router.push('/profile')
 }
@@ -90,6 +94,7 @@ function logout() {
           <el-button size="small" @click="logout">登出</el-button>
         </template>
         <template v-else>
+          <el-button size="small" @click="goRegister">注册</el-button>
           <el-button type="primary" size="small" @click="goLogin">登录</el-button>
         </template>
       </div>

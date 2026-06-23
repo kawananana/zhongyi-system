@@ -16,8 +16,8 @@ import MarketProductImage from '@/components/market/MarketProductImage.vue'
 import { getMarketCategoryMeta } from '@/utils/marketCategories'
 import { fetchProductDetail, type ProductItem } from '@/api/product'
 import { useCartStore } from '@/store/cart'
-import { useOrderStore } from '@/store/order'
 import type { CartLine } from '@/store/cart'
+import { saveCheckoutLines } from '@/utils/checkoutStorage'
 import {
   formatSalesCount,
   parseProductDetail,
@@ -29,7 +29,6 @@ import { requireUserLogin } from '@/utils/requireLogin'
 const route = useRoute()
 const router = useRouter()
 const cart = useCartStore()
-const orderStore = useOrderStore()
 
 const loading = ref(false)
 const product = ref<ProductItem | null>(null)
@@ -66,7 +65,7 @@ function addToCart() {
   ElMessage.success('已加入购物车')
 }
 
-function buyNow() {
+async function buyNow() {
   if (!product.value) return
   if (!requireUserLogin(router, '登录后可购买商品')) return
   const line: CartLine = {
@@ -77,10 +76,8 @@ function buyNow() {
     price: Number(product.value.price),
     quantity: 1,
   }
-  const order = orderStore.createFromSingle(line)
-  if (!order) return
-  ElMessage.success(`订单 ${order.orderNo} 已提交`)
-  router.push('/market/orders')
+  saveCheckoutLines([line])
+  router.push('/market/checkout')
 }
 
 async function loadProduct(id: number) {

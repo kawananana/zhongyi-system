@@ -41,10 +41,7 @@ public class ArticleController {
 
     @GetMapping("/{id}")
     public Result<Article> detail(@PathVariable Long id) {
-        Article article = articleService.getById(id);
-        if (article == null || article.getStatus() == null || article.getStatus() != 1) {
-            return Result.fail(com.bencao.common.ResultCode.NOT_FOUND);
-        }
-        return Result.success(article);
+        return Result.success(articleService.getArticleDetail(id));
     }
+
 }

@@ -5,7 +5,6 @@ import HomeHeader from '@/components/home/HomeHeader.vue'
 import WellnessJournalPanel from '@/components/wellness/WellnessJournalPanel.vue'
 import WellnessCommunityPanel from '@/components/wellness/WellnessCommunityPanel.vue'
 import WellnessGamesPanel from '@/components/wellness/WellnessGamesPanel.vue'
-import WellnessRecommendBot from '@/components/wellness/WellnessRecommendBot.vue'
 
 type TabKey = 'journal' | 'community' | 'games'
 
@@ -59,8 +58,6 @@ const tabs: { key: TabKey; label: string; desc: string; icon: string }[] = [
         <WellnessGamesPanel v-show="activeTab === 'games'" />
       </section>
     </main>
-
-    <WellnessRecommendBot :active-tab="activeTab" @switch-tab="activeTab = $event" />
   </div>
 </template>
 

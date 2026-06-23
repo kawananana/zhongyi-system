@@ -13,6 +13,14 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     proxy: {
+      '/api/acupoints': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/api/health': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,

@@ -4,6 +4,7 @@ import com.bencao.common.Result;
 import com.bencao.dto.ChangePasswordRequest;
 import com.bencao.dto.LoginRequest;
 import com.bencao.dto.LoginResponseVO;
+import com.bencao.dto.RegisterRequest;
 import com.bencao.dto.UpdateProfileRequest;
 import com.bencao.dto.UserProfileVO;
 import com.bencao.security.UserContext;
@@ -27,6 +28,11 @@ public class AuthController {
     @PostMapping("/login")
     public Result<LoginResponseVO> login(@Valid @RequestBody LoginRequest request) {
         return Result.success(authService.login(request));
+    }
+
+    @PostMapping("/register")
+    public Result<LoginResponseVO> register(@Valid @RequestBody RegisterRequest request) {
+        return Result.success(authService.register(request));
     }
 
     @GetMapping("/me")

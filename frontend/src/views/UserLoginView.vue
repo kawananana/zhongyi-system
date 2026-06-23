@@ -36,6 +36,10 @@ async function handleLogin() {
 function goAdminLogin() {
   router.push('/admin/login')
 }
+
+function goRegister() {
+  router.push({ path: '/register', query: route.query })
+}
 </script>
 
 <template>
@@ -67,6 +71,7 @@ function goAdminLogin() {
       </el-form>
       <div class="login-footer">
         <span class="hint">演示账号：13800138000 / password</span>
+        <el-button type="primary" link @click="goRegister">没有账号？立即注册</el-button>
         <el-button type="primary" link @click="goAdminLogin">管理员登录 →</el-button>
       </div>
     </el-card>

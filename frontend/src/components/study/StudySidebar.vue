@@ -14,7 +14,7 @@ import { useUserStore } from '@/store/user'
 const props = withDefaults(
   defineProps<{
     collapsed?: boolean
-    activeTab?: 'chat' | 'games'
+    activeTab?: 'chat' | 'games' | 'calendar'
   }>(),
   { activeTab: 'chat' },
 )
@@ -64,6 +64,10 @@ function goChat() {
 function goGames() {
   router.push('/study?tab=games')
 }
+
+function goCalendar() {
+  router.push('/study?tab=calendar')
+}
 </script>
 
 <template>
@@ -98,7 +102,7 @@ function goGames() {
       <button
         type="button"
         class="nav-item"
-        :class="{ active: activeTab !== 'games' }"
+        :class="{ active: activeTab === 'chat' }"
         @click="goChat"
       >
         <el-icon><ChatDotRound /></el-icon>
@@ -113,7 +117,12 @@ function goGames() {
         <el-icon><Reading /></el-icon>
         趣学小游戏
       </button>
-      <button type="button" class="nav-item" disabled title="即将上线">
+      <button
+        type="button"
+        class="nav-item"
+        :class="{ active: activeTab === 'calendar' }"
+        @click="goCalendar"
+      >
         <el-icon><Calendar /></el-icon>
         复习日历
       </button>

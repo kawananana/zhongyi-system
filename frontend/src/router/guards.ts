@@ -9,6 +9,7 @@ export function setupRouterGuards(router: Router) {
     const isAdminRoute = to.path.startsWith('/admin')
     const isAdminLogin = to.path === '/admin/login'
     const isUserLogin = to.path === '/login'
+    const isUserRegister = to.path === '/register'
 
     if (isAdminLogin) {
       if (adminStore.isLoggedIn()) {
@@ -17,7 +18,7 @@ export function setupRouterGuards(router: Router) {
       return true
     }
 
-    if (isUserLogin) {
+    if (isUserLogin || isUserRegister) {
       if (userStore.isLoggedIn()) {
         return { path: '/' }
       }

@@ -1,33 +1,19 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import { sendStudyChatMessage } from '@/api/studyChat'
+import { buildConstitutionAiPrompt, type ConstitutionResult } from '@/utils/constitutionEvaluate'
 import { buildStudyReply, tryConstitutionReply } from '@/utils/studyAssistant'
+import {
+  loadStudyChatSessions,
+  saveStudyChatSessions,
+  type ChatMessage,
+  type ChatSession,
+} from '@/utils/studyChatStorage'
+import { useUserStore } from '@/store/user'
 
-export interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  createTime: string
-}
+export type { ChatMessage, ChatSession }
 
-export interface ChatSession {
-  id: string
-  title: string
-  messages: ChatMessage[]
-  updateTime: string
-}
-
-const STORAGE_KEY = 'bencao_study_chat'
-
-function loadSessions(): ChatSession[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as ChatSession[]
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
+const CONSTITUTION_PAYLOAD_KEY = 'bencao_constitution_payload'
 
 function genId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
@@ -39,14 +25,43 @@ function titleFromText(text: string) {
 }
 
 export const useStudyChatStore = defineStore('studyChat', () => {
-  const sessions = ref<ChatSession[]>(loadSessions())
-  const activeSessionId = ref<string | null>(sessions.value[0]?.id ?? null)
+  const userStore = useUserStore()
+  const sessions = ref<ChatSession[]>([])
+  const activeSessionId = ref<string | null>(null)
   const replying = ref(false)
+  let persistEnabled = false
+
+  function syncFromStorage(userId?: number | null) {
+    persistEnabled = false
+    if (userId == null) {
+      sessions.value = []
+      activeSessionId.value = null
+      return
+    }
+    const loaded = loadStudyChatSessions(userId)
+    sessions.value = loaded
+    activeSessionId.value = loaded[0]?.id ?? null
+    persistEnabled = true
+  }
+
+  watch(
+    () => [userStore.token, userStore.userBrief?.userId] as const,
+    ([token, userId]) => {
+      if (!token || userId == null) {
+        syncFromStorage(null)
+      } else {
+        syncFromStorage(userId)
+      }
+    },
+    { immediate: true },
+  )
 
   watch(
     sessions,
     (val) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
+      const userId = userStore.userBrief?.userId
+      if (!persistEnabled || userId == null) return
+      saveStudyChatSessions(userId, val)
     },
     { deep: true },
   )
@@ -94,6 +109,28 @@ export const useStudyChatStore = defineStore('studyChat', () => {
     if (!text || replying.value) return
 
     const session = ensureActiveSession()
+    const history = session.messages.slice(-10).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }))
+
+    let constitutionContext: string | undefined
+    if (/九体质|体质测评|体质自测|体质解读/.test(text)) {
+      try {
+        const raw = sessionStorage.getItem(CONSTITUTION_PAYLOAD_KEY)
+        if (raw) {
+          const { answers, result } = JSON.parse(raw) as {
+            answers: Record<number, number>
+            result: ConstitutionResult
+          }
+          constitutionContext = buildConstitutionAiPrompt(answers, result)
+          sessionStorage.removeItem(CONSTITUTION_PAYLOAD_KEY)
+        }
+      } catch {
+        // ignore malformed payload
+      }
+    }
+
     const userMsg: ChatMessage = {
       id: genId('msg'),
       role: 'user',
@@ -110,9 +147,18 @@ export const useStudyChatStore = defineStore('studyChat', () => {
     )
 
     replying.value = true
-    await new Promise((r) => setTimeout(r, 600 + Math.random() * 400))
+    let reply: string
+    try {
+      const result = await sendStudyChatMessage({
+        message: text,
+        history,
+        constitutionContext,
+      })
+      reply = result.reply
+    } catch {
+      reply = tryConstitutionReply(text) ?? buildStudyReply(text)
+    }
 
-    const reply = tryConstitutionReply(text) ?? buildStudyReply(text)
     const assistantMsg: ChatMessage = {
       id: genId('msg'),
       role: 'assistant',

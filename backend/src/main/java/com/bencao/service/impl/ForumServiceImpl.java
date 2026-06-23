@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bencao.common.ResultCode;
 import com.bencao.common.exception.BusinessException;
+import com.bencao.dto.CreateForumPostRequest;
 import com.bencao.dto.ForumPostVO;
 import com.bencao.dto.ShareHerbRequest;
 import com.bencao.entity.ForumPost;
@@ -43,6 +44,25 @@ public class ForumServiceImpl implements ForumService {
         wrapper.orderByDesc(ForumPost::getCreateTime);
         Page<ForumPost> postPage = forumPostMapper.selectPage(new Page<>(page, pageSize), wrapper);
         return toVoPage(postPage);
+    }
+
+    @Override
+    public ForumPostVO createPost(long userId, CreateForumPostRequest request) {
+        String category = normalizeCategory(request.getCategory());
+        ForumPost post = new ForumPost();
+        post.setUserId(userId);
+        post.setTitle(request.getTitle().trim());
+        post.setContent(request.getContent().trim());
+        post.setCategory(category);
+        post.setLikeCount(0);
+        post.setCommentCount(0);
+        post.setAuditStatus(1);
+        post.setStatus(1);
+        forumPostMapper.insert(post);
+
+        ForumPostVO vo = new ForumPostVO();
+        fillVo(vo, post, null, loadUserMap(Set.of(userId)).get(userId));
+        return vo;
     }
 
     @Override
@@ -137,5 +157,12 @@ public class ForumServiceImpl implements ForumService {
         }
         return herbMapper.selectBatchIds(herbIds).stream()
                 .collect(Collectors.toMap(Herb::getId, h -> h));
+    }
+
+    private String normalizeCategory(String category) {
+        if ("share".equalsIgnoreCase(category)) {
+            return "share";
+        }
+        return "question";
     }
 }

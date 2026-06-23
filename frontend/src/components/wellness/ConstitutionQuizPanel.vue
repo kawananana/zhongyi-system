@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import TcmDisclaimer from '@/components/common/TcmDisclaimer.vue'
 import CareTextWithHerbLinks from '@/components/wellness/CareTextWithHerbLinks.vue'
 import {
@@ -14,10 +14,13 @@ import {
   type ConstitutionResult,
 } from '@/utils/constitutionEvaluate'
 import { loadHerbLinkIndex } from '@/utils/constitutionHerbLinks'
+import { loadSavedConstitution, saveConstitution } from '@/utils/constitutionStorage'
+import { useUserStore } from '@/store/user'
 
-const STORAGE_KEY = 'bencao_constitution_last'
+const userStore = useUserStore()
 
 const router = useRouter()
+const route = useRoute()
 const answers = ref<Record<number, number>>({})
 const result = ref<ConstitutionResult | null>(null)
 const phase = ref<'quiz' | 'result'>('quiz')
@@ -35,21 +38,26 @@ async function ensureHerbLinkIndex() {
 }
 
 function loadSaved() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return
-    const parsed = JSON.parse(raw)
-    if (parsed.answers) answers.value = parsed.answers
-    if (parsed.result) {
-      result.value = parsed.result
-      phase.value = 'result'
-    }
-  } catch {
-    /* ignore */
+  const userId = userStore.userBrief?.userId
+  if (!userId) {
+    answers.value = {}
+    result.value = null
+    phase.value = 'quiz'
+    return
   }
+  const saved = loadSavedConstitution(userId)
+  if (!saved) {
+    answers.value = {}
+    result.value = null
+    phase.value = 'quiz'
+    return
+  }
+  answers.value = saved.answers
+  result.value = saved.result
+  phase.value = 'result'
 }
 
-loadSaved()
+watch(() => userStore.userBrief?.userId, () => loadSaved(), { immediate: true })
 watch(
   () => phase.value,
   (p) => {
@@ -59,10 +67,9 @@ watch(
 )
 
 function saveResult(data: Record<number, number>, evalResult: ConstitutionResult) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({ answers: data, result: evalResult, time: new Date().toISOString() }),
-  )
+  const userId = userStore.userBrief?.userId
+  if (!userId) return
+  saveConstitution(userId, data, evalResult)
 }
 
 const answeredCount = computed(() => Object.keys(answers.value).length)
@@ -85,6 +92,23 @@ const groupedQuestions = computed(() => {
 const biasScores = computed(() =>
   result.value?.scores.filter((s) => s.key !== 'pinghe').sort((a, b) => b.total - a.total) ?? [],
 )
+
+const backLabel = computed(() => {
+  if (route.query.from === 'guide') return '← 返回药膳食疗'
+  return '← 返回'
+})
+
+function goBack() {
+  if (route.query.from === 'guide') {
+    router.push('/guide')
+    return
+  }
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+  router.push('/')
+}
 
 function selectAnswer(questionId: number, value: number) {
   answers.value = { ...answers.value, [questionId]: value }
@@ -123,6 +147,10 @@ function renderMarkdownLite(text: string) {
 
 <template>
   <div class="constitution-quiz">
+    <button type="button" class="back-link" @click="goBack">
+      {{ backLabel }}
+    </button>
+
     <header class="quiz-header">
       <div>
         <h2>中医九体质 · 20 题标准自测</h2>
@@ -258,7 +286,9 @@ function renderMarkdownLite(text: string) {
       <TcmDisclaimer class="disclaimer-result" />
 
       <footer class="result-actions">
-        <el-button type="primary" @click="askAiDeep">AI 深入解读</el-button>
+        <el-button v-if="backTarget" type="primary" @click="goBack">返回药膳食疗</el-button>
+        <el-button v-else type="primary" @click="askAiDeep">AI 深入解读</el-button>
+        <el-button v-if="backTarget" @click="askAiDeep">AI 深入解读</el-button>
         <el-button @click="retake">重新测评</el-button>
       </footer>
     </div>
@@ -270,6 +300,22 @@ function renderMarkdownLite(text: string) {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.back-link {
+  align-self: flex-start;
+  border: 1px solid #ebe6dc;
+  background: #fff;
+  color: #1a5f3f;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.back-link:hover {
+  background: #f0f7f2;
 }
 
 .quiz-header {

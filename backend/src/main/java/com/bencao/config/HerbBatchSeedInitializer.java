@@ -83,7 +83,7 @@ public class HerbBatchSeedInitializer implements ApplicationRunner {
                 new LambdaQueryWrapper<Herb>().eq(Herb::getHerbName, herbName).last("LIMIT 1"));
 
         Herb herb = existing != null ? existing : new Herb();
-        applyFields(herb, node, herbName);
+        applyFields(herb, node, herbName, existing != null);
 
         if (existing == null) {
             herbMapper.insert(herb);
@@ -98,7 +98,7 @@ public class HerbBatchSeedInitializer implements ApplicationRunner {
         return SyncResult.UPDATED;
     }
 
-    private void applyFields(Herb herb, JsonNode node, String herbName) {
+    private void applyFields(Herb herb, JsonNode node, String herbName, boolean isUpdate) {
         herb.setHerbName(herbName);
         herb.setAlias(text(node, "alias"));
         herb.setOriginProvince(text(node, "originProvince"));
@@ -112,11 +112,9 @@ public class HerbBatchSeedInitializer implements ApplicationRunner {
         herb.setEfficacy(text(node, "efficacy"));
         herb.setClinicalUsage(text(node, "clinicalUsage"));
         herb.setCoverImage(text(node, "coverImage"));
-        if (node.has("viewCount")) {
-            herb.setViewCount(node.get("viewCount").asInt(0));
-        }
-        if (node.has("collectCount")) {
-            herb.setCollectCount(node.get("collectCount").asInt(0));
+        if (!isUpdate) {
+            herb.setViewCount(0);
+            herb.setCollectCount(0);
         }
         herb.setStatus(node.has("status") ? node.get("status").asInt(1) : 1);
 

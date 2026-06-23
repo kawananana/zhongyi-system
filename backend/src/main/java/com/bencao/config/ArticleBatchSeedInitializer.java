@@ -89,7 +89,7 @@ public class ArticleBatchSeedInitializer implements ApplicationRunner {
                 new LambdaQueryWrapper<Article>().eq(Article::getTitle, title).last("LIMIT 1"));
 
         Article article = existing != null ? existing : new Article();
-        applyFields(article, node, title);
+        applyFields(article, node, title, existing != null);
 
         if (existing == null) {
             articleMapper.insert(article);
@@ -102,7 +102,7 @@ public class ArticleBatchSeedInitializer implements ApplicationRunner {
         return SyncResult.UPDATED;
     }
 
-    private void applyFields(Article article, JsonNode node, String title) {
+    private void applyFields(Article article, JsonNode node, String title, boolean isUpdate) {
         article.setTitle(title);
         article.setArticleType(text(node, "articleType"));
         article.setCategory(text(node, "category"));
@@ -120,8 +120,9 @@ public class ArticleBatchSeedInitializer implements ApplicationRunner {
         } else {
             article.setVideosJson("");
         }
-        if (node.has("viewCount")) {
-            article.setViewCount(node.get("viewCount").asInt(0));
+        // 浏览量仅统计本站访问，种子/外链播放量不写入
+        if (!isUpdate) {
+            article.setViewCount(0);
         }
         article.setStatus(node.has("status") ? node.get("status").asInt(1) : 1);
     }
@@ -133,11 +134,11 @@ public class ArticleBatchSeedInitializer implements ApplicationRunner {
         return node.get(field).asText("").trim();
     }
 
-    /** 仅清理种子文件中已不存在的百科文章，课程等内容保留 */
+    /** 清理种子文件中已不存在的百科文章与课程 */
     private int pruneStaleArticles(Set<String> seedTitles) {
         List<Article> stale = articleMapper.selectList(new LambdaQueryWrapper<Article>()
                 .eq(Article::getArticleType, "wiki")
-                .eq(Article::getContentKind, "article"));
+                .in(Article::getContentKind, "article", "course"));
         List<Long> removeIds = new ArrayList<>();
         for (Article article : stale) {
             if (article.getTitle() != null && !seedTitles.contains(article.getTitle())) {
@@ -148,7 +149,7 @@ public class ArticleBatchSeedInitializer implements ApplicationRunner {
             return 0;
         }
         articleMapper.deleteBatchIds(removeIds);
-        log.info("已移除过期百科文章 {} 条", removeIds.size());
+        log.info("已移除过期百科内容 {} 条", removeIds.size());
         return removeIds.size();
     }
 

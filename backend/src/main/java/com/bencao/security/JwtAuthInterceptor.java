@@ -27,6 +27,8 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
                 }
                 if (JwtService.AUDIENCE_USER.equals(tokenType)) {
                     UserContext.setUserId(Long.parseLong(claims.getSubject()));
+                } else if (JwtService.AUDIENCE_ADMIN.equals(tokenType)) {
+                    AdminContext.setAdminId(Long.parseLong(claims.getSubject()));
                 }
             } catch (Exception ignored) {
                 // 无效 token 视为未登录，由业务接口决定是否强制鉴权
@@ -58,5 +60,6 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
                                 Object handler, Exception ex) {
         UserContext.clear();
+        AdminContext.clear();
     }
 }

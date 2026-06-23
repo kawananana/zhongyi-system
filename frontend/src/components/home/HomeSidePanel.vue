@@ -123,7 +123,8 @@ function onGameClick(gameId: string, status: string) {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.92;
+  object-position: center 18%;
+  opacity: 1;
 }
 
 .entry-badge {

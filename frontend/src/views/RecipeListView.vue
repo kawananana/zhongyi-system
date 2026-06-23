@@ -1,70 +1,164 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Clock, Bowl } from '@element-plus/icons-vue'
+import CareTextWithHerbLinks from '@/components/wellness/CareTextWithHerbLinks.vue'
 import HomeHeader from '@/components/home/HomeHeader.vue'
-import { fetchRecipeFeatured, fetchRecipePage, type RecipeItem } from '@/api/recipe'
-import { RECIPE_CATEGORIES, parseRecipeTags, recipeCategoryLabel } from '@/utils/recipeCategories'
+import { fetchRecipePage, type RecipeItem } from '@/api/recipe'
+import { fetchRecipeFavoriteStatus, toggleFavorite } from '@/api/favorite'
+import { CONSTITUTION_META } from '@/data/constitutionQuiz'
+import { getDietTherapyForConstitution } from '@/data/constitutionDietTherapy'
+import { hasCompletedConstitutionQuiz, loadSavedConstitution } from '@/utils/constitutionStorage'
+import { isUserLoggedIn, requireUserLogin } from '@/utils/requireLogin'
+import type { ConstitutionResult } from '@/utils/constitutionEvaluate'
 import { IMAGE_ERROR_PLACEHOLDER } from '@/utils/image'
+import { Clock, Bowl, Star } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/store/user'
+import { loadHerbLinkIndex } from '@/utils/constitutionHerbLinks'
+import { RECIPE_CATEGORIES, parseRecipeTags, recipeCategoryLabel } from '@/utils/recipeCategories'
 
 const router = useRouter()
-const loading = ref(false)
-const featured = ref<RecipeItem | null>(null)
-const list = ref<RecipeItem[]>([])
-const total = ref(0)
-const page = ref(1)
-const pageSize = ref(9)
+const userStore = useUserStore()
+const recipes = ref<RecipeItem[]>([])
+const allRecipes = ref<RecipeItem[]>([])
 const activeCategory = ref('all')
+const constitutionResult = ref<ConstitutionResult | null>(null)
+const herbLinkIndex = ref(new Map<string, number>())
+const collectedMap = ref<Record<number, boolean>>({})
+const favoriteLoadingId = ref<number | null>(null)
 
-const gridList = computed(() => {
-  const fid = featured.value?.id
-  return list.value.filter((r) => r.id !== fid)
+const isLoggedIn = computed(() => isUserLoggedIn())
+
+const dietTherapy = computed(() => {
+  if (!constitutionResult.value) return null
+  return getDietTherapyForConstitution(constitutionResult.value.primary)
 })
 
-const featuredTags = computed(() => parseRecipeTags(featured.value?.tags))
+const hasCompletedQuiz = computed(() => {
+  if (!isLoggedIn.value) return false
+  const userId = userStore.userBrief?.userId
+  if (!userId) return false
+  return hasCompletedConstitutionQuiz(userId)
+})
 
-async function loadFeatured() {
+const showConstitutionRecommend = computed(
+  () => hasCompletedQuiz.value && !!constitutionResult.value && !!dietTherapy.value,
+)
+
+const secondaryLabel = computed(() => {
+  const secondary = constitutionResult.value?.secondary
+  if (!secondary) return ''
+  return CONSTITUTION_META[secondary].name
+})
+
+const matchedRecipe = computed(() => {
+  const name = dietTherapy.value?.recipeName
+  if (!name) return null
+  return allRecipes.value.find((r) => r.recipeName === name) ?? null
+})
+
+const recommendTags = computed(() => {
+  if (matchedRecipe.value) return parseRecipeTags(matchedRecipe.value.tags)
+  return ['体质食疗', dietTherapy.value?.name].filter(Boolean) as string[]
+})
+
+async function loadAllRecipesForMatch() {
   try {
-    featured.value = await fetchRecipeFeatured()
+    const res = await fetchRecipePage({ page: 1, pageSize: 20, category: 'all' })
+    allRecipes.value = res.list || []
   } catch {
-    featured.value = null
+    allRecipes.value = []
   }
 }
 
-async function loadList() {
-  loading.value = true
+async function loadRecipes() {
   try {
-    const data = await fetchRecipePage({
-      page: page.value,
-      pageSize: pageSize.value,
-      category: activeCategory.value === 'all' ? undefined : activeCategory.value,
-    })
-    list.value = data.list ?? []
-    total.value = data.total ?? 0
-  } finally {
-    loading.value = false
+    const res = await fetchRecipePage({ page: 1, pageSize: 12, category: activeCategory.value })
+    recipes.value = res.list || []
+    await syncFavoriteStatus()
+  } catch {
+    recipes.value = []
+    collectedMap.value = {}
   }
 }
 
-function selectCategory(key: string) {
-  activeCategory.value = key
-  page.value = 1
-  loadList()
+async function syncFavoriteStatus() {
+  if (!isUserLoggedIn()) {
+    collectedMap.value = {}
+    return
+  }
+  const ids = recipes.value.map((item) => item.id)
+  if (!ids.length) {
+    collectedMap.value = {}
+    return
+  }
+  try {
+    collectedMap.value = await fetchRecipeFavoriteStatus(ids)
+  } catch {
+    collectedMap.value = {}
+  }
 }
 
-function loadMore() {
-  if (list.value.length >= total.value) return
-  pageSize.value += 6
-  loadList()
+async function toggleCollect(recipe: RecipeItem, event: Event) {
+  event.stopPropagation()
+  if (!requireUserLogin(router, '登录后可收藏')) return
+  favoriteLoadingId.value = recipe.id
+  try {
+    const collected = collectedMap.value[recipe.id] ?? false
+    const res = await toggleFavorite('recipe', recipe.id, collected ? 'remove' : 'add')
+    collectedMap.value = { ...collectedMap.value, [recipe.id]: res.collected }
+    ElMessage.success(res.collected ? '已加入收藏' : '已取消收藏')
+  } finally {
+    favoriteLoadingId.value = null
+  }
 }
 
 function goDetail(id: number) {
   router.push(`/guide/${id}`)
 }
 
+function goConstitution() {
+  if (!requireUserLogin(router, '请先登录后再进行体质测评', '/constitution?from=guide')) return
+  router.push({ path: '/constitution', query: { from: 'guide' } })
+}
+
+async function selectCategory(key: string) {
+  activeCategory.value = key
+  await loadRecipes()
+}
+
+function loadConstitutionRecommend() {
+  if (!isUserLoggedIn()) {
+    constitutionResult.value = null
+    return
+  }
+  const userId = userStore.userBrief?.userId
+  if (!userId) {
+    constitutionResult.value = null
+    return
+  }
+  const saved = loadSavedConstitution(userId)
+  constitutionResult.value = saved?.result ?? null
+}
+
+watch(() => [userStore.token, userStore.userBrief?.userId] as const, () => {
+  loadConstitutionRecommend()
+  void syncFavoriteStatus()
+})
+
 onMounted(async () => {
-  await loadFeatured()
-  await loadList()
+  loadConstitutionRecommend()
+  const [, , index] = await Promise.all([
+    loadAllRecipesForMatch(),
+    loadRecipes(),
+    loadHerbLinkIndex(),
+  ])
+  herbLinkIndex.value = index
+})
+
+onActivated(async () => {
+  loadConstitutionRecommend()
+  await Promise.all([loadAllRecipesForMatch(), loadRecipes()])
 })
 </script>
 
@@ -72,27 +166,84 @@ onMounted(async () => {
   <div class="page">
     <HomeHeader />
     <main class="main">
-      <section v-if="featured" class="featured-card" @click="goDetail(featured.id)">
+      <section
+        v-if="showConstitutionRecommend"
+        class="featured-card"
+        @click="matchedRecipe ? goDetail(matchedRecipe.id) : undefined"
+      >
         <div class="featured-img-wrap">
-          <span class="daily-badge">每日一荐</span>
-          <el-image class="featured-img" :src="featured.coverImage" fit="cover">
+          <span class="daily-badge">体质食疗</span>
+          <el-image
+            class="featured-img"
+            :src="matchedRecipe?.coverImage"
+            fit="cover"
+          >
             <template #error>
-              <img :src="IMAGE_ERROR_PLACEHOLDER" alt="" class="error-img" />
+              <div class="constitution-cover">
+                <span class="cover-icon">🍲</span>
+                <span>{{ dietTherapy.name }}</span>
+              </div>
             </template>
           </el-image>
         </div>
         <div class="featured-body">
-          <div class="meta-row">
-            <span class="meta-item"><el-icon><Clock /></el-icon> 烹饪时间：{{ featured.cookingTime || '—' }}</span>
-            <span class="meta-item"><el-icon><Bowl /></el-icon> 难度：{{ featured.difficulty || '—' }}</span>
+          <div class="constitution-head">
+            <span class="constitution-tag">{{ dietTherapy.name }} · 专属推荐</span>
+            <span v-if="secondaryLabel" class="secondary-tag">兼 {{ secondaryLabel }}</span>
           </div>
-          <h2 class="featured-title">{{ featured.recipeName }}</h2>
-          <p class="featured-desc">{{ featured.summary || featured.efficacy }}</p>
-          <div v-if="featuredTags.length" class="hash-tags">
-            <span v-for="t in featuredTags" :key="t" class="hash-tag">#{{ t }}</span>
+          <p class="traits-line">{{ dietTherapy.traits }}</p>
+          <h2 class="featured-title">
+            {{ matchedRecipe ? matchedRecipe.recipeName : '药膳食疗方案' }}
+          </h2>
+          <p class="featured-desc" @click.stop>
+            <CareTextWithHerbLinks
+              :text="dietTherapy.dietPlan"
+              :herb-link-index="herbLinkIndex"
+              link-from="guide"
+            />
+          </p>
+          <div v-if="recommendTags.length" class="hash-tags">
+            <span v-for="t in recommendTags" :key="t" class="hash-tag">#{{ t }}</span>
           </div>
-          <button type="button" class="featured-btn" @click.stop="goDetail(featured.id)">
-            查看完整做法 →
+          <div v-if="matchedRecipe" class="meta-row">
+            <span class="meta-item">
+              <el-icon><Clock /></el-icon> 烹饪时间：{{ matchedRecipe.cookingTime || '—' }}
+            </span>
+            <span class="meta-item">
+              <el-icon><Bowl /></el-icon> 难度：{{ matchedRecipe.difficulty || '—' }}
+            </span>
+          </div>
+          <div class="action-row">
+            <button
+              v-if="matchedRecipe"
+              type="button"
+              class="featured-btn"
+              @click.stop="goDetail(matchedRecipe.id)"
+            >
+              查看完整做法 →
+            </button>
+            <button type="button" class="ghost-btn" @click.stop="goConstitution">
+              查看体质测评
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section v-else class="featured-card cta-card" @click="goConstitution">
+        <div class="featured-img-wrap cta-cover">
+          <span class="daily-badge">体质食疗</span>
+          <div class="constitution-cover">
+            <span class="cover-icon">📋</span>
+            <span>九体质自测</span>
+          </div>
+        </div>
+        <div class="featured-body">
+          <h2 class="featured-title">完成体质测试，获取专属药膳食疗</h2>
+          <p class="featured-desc">
+            登录后完成 20 道九体质标准自测题，系统将根据您的体质类型（如阳虚、阴虚、痰湿等）推荐对应的药膳食疗方案。
+          </p>
+          <button type="button" class="featured-btn" @click.stop="goConstitution">
+            前往体质测试 →
           </button>
         </div>
       </section>
@@ -110,53 +261,45 @@ onMounted(async () => {
         </button>
       </div>
 
-      <div v-loading="loading" class="grid-wrap">
-        <el-empty v-if="!loading && gridList.length === 0" description="暂无食谱" />
-        <div v-else class="recipe-grid">
-          <article
-            v-for="item in gridList"
-            :key="item.id"
-            class="recipe-card"
-            @click="goDetail(item.id)"
-          >
-            <el-image class="card-img" :src="item.coverImage" fit="cover">
+      <div v-if="recipes.length" class="recipe-grid">
+        <article v-for="recipe in recipes" :key="recipe.id" class="recipe-card" @click="goDetail(recipe.id)">
+          <div class="card-img-wrap">
+            <el-image class="card-img" :src="recipe.coverImage" fit="cover">
               <template #error>
                 <img :src="IMAGE_ERROR_PLACEHOLDER" alt="" class="error-img" />
               </template>
             </el-image>
-            <div class="card-tags">
-              <span class="mini-tag">{{ recipeCategoryLabel(item.category || '') }}</span>
-              <span class="mini-tag alt">{{ item.difficulty || '简单' }}</span>
-            </div>
-            <h3 class="card-title">{{ item.recipeName }}</h3>
-            <p class="card-snippet">{{ item.summary || item.efficacy }}</p>
-            <div class="card-foot">
-              <span>难度：{{ item.difficulty || '简单' }}</span>
-              <span class="detail-link">详情 &gt;</span>
-            </div>
-          </article>
-        </div>
+            <button
+              type="button"
+              class="card-collect-btn"
+              :class="{ collected: collectedMap[recipe.id] }"
+              :disabled="favoriteLoadingId === recipe.id"
+              :title="collectedMap[recipe.id] ? '取消收藏' : '收藏'"
+              @click="toggleCollect(recipe, $event)"
+            >
+              <el-icon><Star /></el-icon>
+            </button>
+          </div>
+          <div class="card-tags">
+            <span v-if="recipe.category" class="mini-tag">{{ recipeCategoryLabel(recipe.category) }}</span>
+            <span v-if="recipe.difficulty" class="mini-tag alt">{{ recipe.difficulty }}</span>
+          </div>
+          <h3 class="card-title">{{ recipe.recipeName }}</h3>
+          <p class="card-snippet" @click.stop>
+            <CareTextWithHerbLinks
+              :text="recipe.summary || recipe.efficacy || ''"
+              :herb-link-index="herbLinkIndex"
+              link-from="guide"
+            />
+          </p>
+          <div class="card-foot">
+            <span>{{ recipe.cookingTime || '—' }}</span>
+            <span class="detail-link">查看详情</span>
+          </div>
+        </article>
       </div>
 
-      <div v-if="list.length < total" class="load-more">
-        <button type="button" @click="loadMore">加载更多食谱…</button>
-      </div>
-
-      <section class="bottom-section">
-        <div class="tips-box">
-          <h4>煎药与烹饪小贴士</h4>
-          <ul>
-            <li><strong>器具选择</strong>：药膳宜砂锅、陶瓷锅慢炖，忌用铁锅、铝锅，以免药性发生变化。</li>
-            <li><strong>火候掌握</strong>：武火煮沸后改文火，所谓「文火慢炖」方能出味入膳。</li>
-            <li><strong>食用禁忌</strong>：服药期间忌食生冷、油腻、辛辣；具体忌口请遵医嘱。</li>
-          </ul>
-        </div>
-        <div class="cta-box">
-          <p class="cta-title">定制您的专属食谱</p>
-          <p class="cta-desc">不知道自己适合吃什么？</p>
-          <el-button type="primary" round @click="router.push('/chat')">去社区咨询</el-button>
-        </div>
-      </section>
+      <el-empty v-else description="暂无食谱" />
     </main>
   </div>
 </template>
@@ -190,6 +333,10 @@ onMounted(async () => {
   box-shadow: 0 12px 32px rgba(92, 64, 51, 0.12);
 }
 
+.cta-card {
+  border-color: #d4ebe0;
+}
+
 @media (max-width: 768px) {
   .featured-card {
     grid-template-columns: 1fr;
@@ -213,12 +360,35 @@ onMounted(async () => {
   object-fit: cover;
 }
 
+.constitution-cover {
+  width: 100%;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(145deg, #f0f7f2, #e8f5ee);
+  color: #1a5f3f;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cover-icon {
+  font-size: 48px;
+}
+
+.cta-cover .constitution-cover {
+  background: linear-gradient(145deg, #fdf6ec, #f5efe3);
+  color: #5c4033;
+}
+
 .daily-badge {
   position: absolute;
   top: 16px;
   left: 16px;
   z-index: 2;
-  background: #e6a23c;
+  background: #1a5f3f;
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -230,6 +400,39 @@ onMounted(async () => {
   padding: 28px 32px;
   display: flex;
   flex-direction: column;
+}
+
+.constitution-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.constitution-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #e8f5ee;
+  color: #1a5f3f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.secondary-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #fdf6ec;
+  color: #b88230;
+  font-size: 12px;
+}
+
+.traits-line {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #909399;
+  line-height: 1.6;
 }
 
 .meta-row {
@@ -266,7 +469,7 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .hash-tag {
@@ -275,6 +478,12 @@ onMounted(async () => {
   border-radius: 20px;
   font-size: 13px;
   color: #6b5c4f;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .featured-btn {
@@ -291,6 +500,20 @@ onMounted(async () => {
 .featured-btn:hover {
   background: #5c4033;
   color: #fff;
+}
+
+.ghost-btn {
+  padding: 10px 20px;
+  border: 1px solid #d4ebe0;
+  border-radius: 24px;
+  background: #fff;
+  color: #1a5f3f;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ghost-btn:hover {
+  background: #f0f7f2;
 }
 
 .category-bar {
@@ -347,6 +570,41 @@ onMounted(async () => {
 .recipe-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(92, 64, 51, 0.1);
+}
+
+.card-img-wrap {
+  position: relative;
+}
+
+.card-collect-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #909399;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.card-collect-btn:hover,
+.card-collect-btn.collected {
+  color: #1a5f3f;
+  background: #fff;
+  transform: scale(1.05);
+}
+
+.card-collect-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .card-img {
@@ -407,81 +665,5 @@ onMounted(async () => {
 
 .detail-link {
   color: #1a5f3f;
-}
-
-.load-more {
-  text-align: center;
-  margin: 24px 0;
-}
-
-.load-more button {
-  border: none;
-  background: none;
-  color: #8b6914;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.bottom-section {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 20px;
-  margin-top: 16px;
-}
-
-@media (max-width: 768px) {
-  .bottom-section {
-    grid-template-columns: 1fr;
-  }
-}
-
-.tips-box {
-  background: #ebe6dc;
-  border-radius: 12px;
-  padding: 24px 28px;
-}
-
-.tips-box h4 {
-  margin: 0 0 16px;
-  font-size: 16px;
-  color: #3d3028;
-}
-
-.tips-box ul {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-}
-
-.tips-box li {
-  margin-bottom: 12px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: #5c5046;
-}
-
-.cta-box {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e8e0d4;
-  padding: 28px 24px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.cta-title {
-  margin: 0 0 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #3d3028;
-}
-
-.cta-desc {
-  margin: 0 0 16px;
-  font-size: 13px;
-  color: #909399;
 }
 </style>

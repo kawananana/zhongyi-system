@@ -89,7 +89,7 @@ function renderMarkdownLite(text: string) {
       <div v-if="!chat.hasMessages" class="welcome">
         <p class="welcome-badge">🌿 本草萌智 · 伴学助手</p>
         <h1>有什么我能帮你的吗？</h1>
-        <p class="welcome-sub">本草知识答疑 · 复习规划 · 药材对比</p>
+        <p class="welcome-sub">亲民伴学小助手「小萌」· 精通中医药 · 药材、方剂、体质、养生都能聊</p>
         <div class="suggestions">
           <button
             v-for="item in suggestions"

@@ -2,10 +2,16 @@ server:
   port: 8080
   servlet:
     context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
   application:
     name: bencao-backend
+  config:
+    import: optional:classpath:application-local.yml
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/bencao_mengzhi?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
@@ -17,18 +23,21 @@ spring:
       port: 6379
       database: 0
       timeout: 3000ms
-
-mybatis-plus:
-  mapper-locations: classpath*:/mapper/**/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      id-type: auto
+  mvc:
+    charset: UTF-8
+    format:
+      date-time: iso
 
 bencao:
+  seed:
+    recipes-batch: true
   jwt:
     secret: bencao-mengzhi-jwt-secret-change-in-production-min-256bits
     access-token-expire-seconds: 7200
     refresh-token-expire-seconds: 604800
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:}
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com/chat/completions}
+    model: ${DEEPSEEK_MODEL:deepseek-chat}
+    temperature: 0.7
+    max-tokens: 2048

@@ -1,9 +1,9 @@
 export const RECIPE_CATEGORIES = [
   { key: 'all', label: '全部' },
-  { key: 'soup', label: '滋补汤羹' },
-  { key: 'porridge', label: '养生粥品' },
-  { key: 'tea', label: '草本茶饮' },
-  { key: 'snack', label: '时令小点' },
+  { key: 'soup', label: '益脾胃' },
+  { key: 'porridge', label: '清热祛暑' },
+  { key: 'tea', label: '温经散寒' },
+  { key: 'snack', label: '温中祛寒' },
 ] as const
 
 export function recipeCategoryLabel(key: string): string {

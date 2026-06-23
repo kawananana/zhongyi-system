@@ -8,4 +8,6 @@ public interface ArticleService extends IService<Article> {
 
     Page<Article> pageArticles(long page, long pageSize, String articleType,
                              String category, String contentKind);
+
+    Article getArticleDetail(Long id);
 }

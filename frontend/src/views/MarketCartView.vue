@@ -5,15 +5,14 @@ import { Delete, ShoppingCart } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import MarketPageShell from '@/components/market/MarketPageShell.vue'
 import { useCartStore } from '@/store/cart'
-import { useOrderStore } from '@/store/order'
 import { useUserStore } from '@/store/user'
 import { requireUserLogin } from '@/utils/requireLogin'
+import { saveCheckoutLines } from '@/utils/checkoutStorage'
 import MarketProductImage from '@/components/market/MarketProductImage.vue'
 import { productCategoryLabel } from '@/utils/productDisplay'
 
 const router = useRouter()
 const cart = useCartStore()
-const orderStore = useOrderStore()
 const userStore = useUserStore()
 
 const hasItems = computed(() => cart.items.length > 0)
@@ -32,11 +31,8 @@ function checkout() {
     ElMessage.warning('请先勾选要结算的商品')
     return
   }
-  const order = orderStore.createFromCart(cart.selectedItems)
-  if (!order) return
-  cart.removeSelected()
-  ElMessage.success(`订单 ${order.orderNo} 已提交`)
-  router.push('/market/orders')
+  saveCheckoutLines(cart.selectedItems)
+  router.push('/market/checkout')
 }
 </script>
 

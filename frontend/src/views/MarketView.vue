@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onActivated, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import HomeHeader from '@/components/home/HomeHeader.vue'
@@ -85,6 +85,10 @@ watch(activeCategory, (cat) => {
 
 loadList()
 updateTitle()
+
+onActivated(() => {
+  loadList()
+})
 </script>
 
 <template>

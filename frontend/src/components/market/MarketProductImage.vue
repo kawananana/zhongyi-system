@@ -53,6 +53,7 @@ watch(src, () => {
     <div v-if="!imgLoaded && !loadFailed" class="img-skeleton" aria-hidden="true" />
     <img
       v-show="!loadFailed"
+      :key="src"
       class="market-img"
       :class="[`fit-${fit}`, { loaded: imgLoaded }]"
       :src="src"

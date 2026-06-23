@@ -6,6 +6,9 @@ import {
   Goods,
   ChatDotRound,
   Collection,
+  User,
+  RefreshLeft,
+  ShoppingBag,
 } from '@element-plus/icons-vue'
 
 interface MenuItem {
@@ -15,10 +18,13 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { title: '图鉴管理', path: '/admin/herbs', icon: Collection },
-  { title: '商品管理', path: '/admin/products', icon: Goods },
-  { title: '论坛管控', path: '/admin/forum', icon: ChatDotRound },
   { title: '数据看板', path: '/admin/dashboard', icon: DataAnalysis },
+  { title: '学员管理', path: '/admin/users', icon: User },
+  { title: '图鉴管理', path: '/admin/herbs', icon: Collection },
+  { title: '市集商品', path: '/admin/products', icon: Goods },
+  { title: '订单管理', path: '/admin/orders', icon: ShoppingBag },
+  { title: '退货审核', path: '/admin/returns', icon: RefreshLeft },
+  { title: '论坛管控', path: '/admin/forum', icon: ChatDotRound },
 ]
 
 const route = useRoute()

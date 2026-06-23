@@ -1,9 +1,18 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { CircleCheck, ShoppingBag } from '@element-plus/icons-vue'
 import MarketPageShell from '@/components/market/MarketPageShell.vue'
-import { useOrderStore, orderStatusLabel, type MarketOrder } from '@/store/order'
+import { useOrderStore, orderStatusLabel, returnStatusLabel } from '@/store/order'
+import { useUserStore } from '@/store/user'
 
 const orderStore = useOrderStore()
+const userStore = useUserStore()
+
+onMounted(async () => {
+  if (userStore.isLoggedIn()) {
+    await orderStore.loadOrders()
+  }
+})
 
 function formatPrice(n: number) {
   return n.toFixed(2)
@@ -57,13 +66,13 @@ function statusClass(status: MarketOrder['orderStatus']) {
           我的历史订单
         </h2>
 
-        <el-empty v-if="orderStore.orders.length === 0" description="暂无历史订单">
+        <el-empty v-if="!orderStore.loading && orderStore.orders.length === 0" description="暂无历史订单">
           <RouterLink to="/market">
             <el-button type="primary" class="btn-primary">去市集逛逛</el-button>
           </RouterLink>
         </el-empty>
 
-        <div v-else class="order-cards">
+        <div v-else class="order-cards" v-loading="orderStore.loading">
           <article
             v-for="order in orderStore.orders"
             :key="order.id"
@@ -88,14 +97,27 @@ function statusClass(status: MarketOrder['orderStatus']) {
 
             <div class="card-foot">
               <span class="ship-info">
-                收货人：{{ order.receiverName || '本草用户' }}
+                收货人：{{ order.receiverName || '—' }}
+                <template v-if="order.receiverPhone"> | {{ order.receiverPhone }}</template>
                 <template v-if="order.receiverAddress">
                   | {{ order.receiverAddress }}
                 </template>
               </span>
-              <span class="paid">
-                实付：<strong>¥ {{ formatPrice(order.totalAmount) }}</strong>
-              </span>
+              <div class="foot-actions">
+                <el-tag
+                  v-if="order.returnRequest"
+                  size="small"
+                  :type="order.returnRequest.status === 1 ? 'success' : order.returnRequest.status === 2 ? 'danger' : 'warning'"
+                >
+                  {{ returnStatusLabel(order.returnRequest.status) }}
+                </el-tag>
+                <RouterLink :to="`/market/orders/${order.id}`">
+                  <el-button type="primary" link>查看详情</el-button>
+                </RouterLink>
+                <span class="paid">
+                  实付：<strong>¥ {{ formatPrice(order.totalAmount) }}</strong>
+                </span>
+              </div>
             </div>
           </article>
         </div>
@@ -306,6 +328,14 @@ function statusClass(status: MarketOrder['orderStatus']) {
   background: #fff;
   border-top: 1px solid #f0ebe3;
   font-size: 13px;
+}
+
+.foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .ship-info {

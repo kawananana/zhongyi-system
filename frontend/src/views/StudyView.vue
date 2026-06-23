@@ -4,11 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import HomeHeader from '@/components/home/HomeHeader.vue'
 import StudySidebar from '@/components/study/StudySidebar.vue'
 import StudyChatPanel from '@/components/study/StudyChatPanel.vue'
+import StudyReviewCalendarPanel from '@/components/study/StudyReviewCalendarPanel.vue'
 import WellnessGamesPanel from '@/components/wellness/WellnessGamesPanel.vue'
 import { useStudyChatStore } from '@/store/studyChat'
 import { requireUserLogin } from '@/utils/requireLogin'
 
-type StudyTab = 'chat' | 'games'
+type StudyTab = 'chat' | 'games' | 'calendar'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,7 +18,9 @@ const sidebarCollapsed = ref(false)
 const constitutionHandled = ref(false)
 
 function tabFromRoute(): StudyTab {
-  return route.query.tab === 'games' ? 'games' : 'chat'
+  if (route.query.tab === 'games') return 'games'
+  if (route.query.tab === 'calendar') return 'calendar'
+  return 'chat'
 }
 
 const activeTab = ref<StudyTab>(tabFromRoute())
@@ -76,6 +79,11 @@ onUnmounted(() => {
       <main class="study-main">
         <StudyChatPanel
           v-if="activeTab === 'chat'"
+          :sidebar-collapsed="sidebarCollapsed"
+          @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed"
+        />
+        <StudyReviewCalendarPanel
+          v-else-if="activeTab === 'calendar'"
           :sidebar-collapsed="sidebarCollapsed"
           @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed"
         />

@@ -35,6 +35,13 @@ export const HERB_CATEGORIES: HerbCategory[] = [
   },
 ]
 
+export function filterHerbsByCategory(herbs: HerbItem[], categoryKey: string): HerbItem[] {
+  if (!categoryKey) return herbs
+  const cat = HERB_CATEGORIES.find((c) => c.key === categoryKey)
+  if (!cat) return herbs
+  return herbs.filter((h) => cat.match(h))
+}
+
 export function extractLatinName(alias?: string): string {
   if (!alias) return ''
   const first = alias.split(/[、,，]/)[0]?.trim() || ''

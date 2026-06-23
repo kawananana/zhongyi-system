@@ -2,10 +2,15 @@
 import { computed } from 'vue'
 import { parseCareTextSegments } from '@/utils/constitutionHerbLinks'
 
-const props = defineProps<{
-  text: string
-  herbLinkIndex: Map<string, number>
-}>()
+const props = withDefaults(
+  defineProps<{
+    text: string
+    herbLinkIndex: Map<string, number>
+    /** 跳转图鉴详情时的来源，用于返回导航 */
+    linkFrom?: string
+  }>(),
+  { linkFrom: 'constitution' },
+)
 
 const segments = computed(() => parseCareTextSegments(props.text, props.herbLinkIndex))
 </script>
@@ -15,9 +20,10 @@ const segments = computed(() => parseCareTextSegments(props.text, props.herbLink
     <template v-for="(seg, i) in segments" :key="i">
       <RouterLink
         v-if="seg.type === 'herb' && seg.herbId"
-        :to="{ path: `/atlas/herbs/${seg.herbId}`, query: { from: 'constitution' } }"
+        :to="{ path: `/atlas/herbs/${seg.herbId}`, query: { from: linkFrom } }"
         class="herb-link"
         :title="`查看${seg.value}详情`"
+        @click.stop
       >
         {{ seg.value }}
       </RouterLink>

@@ -31,6 +31,18 @@ export function fetchForumPosts(params: {
   })
 }
 
+export function createForumPost(data: {
+  title: string
+  content: string
+  category: 'question' | 'share'
+}) {
+  return request<ForumPostItem>({
+    url: '/forum/posts',
+    method: 'post',
+    data,
+  })
+}
+
 export function shareHerbToForum(herbId: number, content?: string) {
   return request<ForumPostItem>({
     url: '/forum/share/herb',

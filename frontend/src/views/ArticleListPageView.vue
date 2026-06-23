@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { VideoPlay, Document, Reading, Picture } from '@element-plus/icons-vue'
+import { onActivated, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { VideoPlay, Document, Reading, Picture, Star } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { parseGalleryJson, parseVideosJson } from '@/utils/wikiMedia'
 import HomeHeader from '@/components/home/HomeHeader.vue'
 import { fetchArticlePage, type ArticleItem } from '@/api/article'
+import { fetchArticleFavoriteStatus, toggleFavorite } from '@/api/favorite'
+import { useUserStore } from '@/store/user'
+import { requireUserLogin } from '@/utils/requireLogin'
 import {
   WIKI_CONTENT_KINDS,
   WIKI_SIDEBAR_CATEGORIES,
@@ -16,14 +20,33 @@ import { IMAGE_ERROR_PLACEHOLDER } from '@/utils/image'
 import { resolveArticleCover } from '@/utils/articleCover'
 
 const router = useRouter()
+const route = useRoute()
+const userStore = useUserStore()
 const loading = ref(false)
 const list = ref<ArticleItem[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(12)
+const collectedMap = ref<Record<number, boolean>>({})
+const favoriteLoadingId = ref<number | null>(null)
 
 const activeKind = ref<WikiContentKind>('article')
-const activeCategory = ref(WIKI_DEFAULT_CATEGORY)
+const initialCategory = typeof route.query.category === 'string' ? route.query.category : WIKI_DEFAULT_CATEGORY
+const activeCategory = ref(
+  WIKI_SIDEBAR_CATEGORIES.some((c) => c.key === initialCategory) ? initialCategory : WIKI_DEFAULT_CATEGORY,
+)
+
+async function loadFavoriteStatus(items: ArticleItem[]) {
+  if (!userStore.isLoggedIn() || !items.length) {
+    collectedMap.value = {}
+    return
+  }
+  try {
+    collectedMap.value = await fetchArticleFavoriteStatus(items.map((item) => item.id))
+  } catch {
+    collectedMap.value = {}
+  }
+}
 
 async function load() {
   loading.value = true
@@ -36,11 +59,32 @@ async function load() {
     })
     list.value = data.list ?? []
     total.value = data.total ?? 0
+    await loadFavoriteStatus(list.value)
   } catch {
     list.value = []
     total.value = 0
+    collectedMap.value = {}
   } finally {
     loading.value = false
+  }
+}
+
+function favoriteType(item: ArticleItem): 'article' | 'course' {
+  return item.contentKind === 'course' ? 'course' : 'article'
+}
+
+async function toggleCollect(item: ArticleItem, event: Event) {
+  event.stopPropagation()
+  if (!requireUserLogin(router, '登录后可收藏')) return
+  favoriteLoadingId.value = item.id
+  try {
+    const type = favoriteType(item)
+    const collected = collectedMap.value[item.id] ?? false
+    const res = await toggleFavorite(type, item.id, collected ? 'remove' : 'add')
+    collectedMap.value = { ...collectedMap.value, [item.id]: res.collected }
+    ElMessage.success(res.collected ? '已加入收藏' : '已取消收藏')
+  } finally {
+    favoriteLoadingId.value = null
   }
 }
 
@@ -60,7 +104,22 @@ function goDetail(id: number) {
   router.push(`/atlas/articles/${id}`)
 }
 
+watch(
+  () => route.query.category,
+  (category) => {
+    if (typeof category !== 'string') return
+    if (!WIKI_SIDEBAR_CATEGORIES.some((c) => c.key === category)) return
+    activeCategory.value = category
+    page.value = 1
+    load()
+  },
+)
+
 load()
+
+onActivated(() => {
+  load()
+})
 </script>
 
 <template>
@@ -72,7 +131,7 @@ load()
         <div class="hero-text">
           <span class="hero-badge">📚 知识宝库</span>
           <h1>本草百科</h1>
-          <p>针灸、艾灸、药膳与养生起居，图文课程一站式学习</p>
+          <p>针灸、热敏灸、药膳与养生起居，图文课程一站式学习</p>
         </div>
         <div class="hero-stats">
           <div class="stat-item">
@@ -147,8 +206,18 @@ load()
                 <span class="kind-badge">
                   <el-icon v-if="item.contentKind === 'course'"><VideoPlay /></el-icon>
                   <el-icon v-else><Document /></el-icon>
-                  {{ item.contentKind === 'course' ? '课程' : '文章' }}
+                  {{ item.contentKind === 'course' ? '视频' : '文章' }}
                 </span>
+                <button
+                  type="button"
+                  class="card-collect-btn"
+                  :class="{ collected: collectedMap[item.id] }"
+                  :disabled="favoriteLoadingId === item.id"
+                  :title="collectedMap[item.id] ? '取消收藏' : '收藏'"
+                  @click="toggleCollect(item, $event)"
+                >
+                  <el-icon><Star /></el-icon>
+                </button>
               </div>
               <div class="card-body">
                 <span class="cat-tag">{{ categoryLabel(item.category || '') }}</span>
@@ -163,7 +232,7 @@ load()
                       <el-icon><Picture /></el-icon>
                     </span>
                   </span>
-                  <span class="views">{{ item.viewCount ?? 0 }} 阅读</span>
+                  <span class="views">{{ item.viewCount ?? 0 }} 站内阅读</span>
                 </p>
               </div>
             </article>
@@ -485,6 +554,37 @@ load()
   inset: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.35) 0%, transparent 50%);
   pointer-events: none;
+}
+
+.card-collect-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #909399;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.card-collect-btn:hover,
+.card-collect-btn.collected {
+  color: #1a5f3f;
+  background: #fff;
+  transform: scale(1.05);
+}
+
+.card-collect-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .kind-badge {

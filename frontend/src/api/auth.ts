@@ -14,3 +14,15 @@ export function loginByPhone(phone: string, password: string) {
     data: { phone, password },
   })
 }
+
+export function registerByPhone(data: {
+  phone: string
+  password: string
+  nickname?: string
+}) {
+  return request<LoginResult>({
+    url: '/auth/register',
+    method: 'post',
+    data,
+  })
+}

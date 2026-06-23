@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ChatDotRound, Pointer, Star, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { fetchForumPosts, shareHerbToForum, type ForumPostItem } from '@/api/forum'
+import { fetchForumPosts, shareHerbToForum, createForumPost, type ForumPostItem } from '@/api/forum'
 import { useUserStore } from '@/store'
 import { requireUserLogin } from '@/utils/requireLogin'
 
@@ -39,6 +39,8 @@ const total = ref(0)
 const showCompose = ref(false)
 const composeHerbId = ref<number | null>(null)
 const composeHerbName = ref('')
+const composeTitle = ref('')
+const composeCategory = ref<'question' | 'share'>('question')
 const composeContent = ref('')
 const publishing = ref(false)
 
@@ -52,8 +54,8 @@ const posts = ref<CommunityPost[]>([])
 
 const filteredPosts = computed(() => posts.value)
 
-const composeTitle = computed(() =>
-  composeHerbName.value ? `分享药材 · ${composeHerbName.value}` : '',
+const composeTitlePreview = computed(() =>
+  composeHerbId.value ? `分享药材 · ${composeHerbName.value}` : composeTitle.value,
 )
 
 function formatTimeAgo(iso?: string): string {
@@ -106,6 +108,8 @@ function openHerbCompose(herbId: number, herbName: string) {
   if (!requireUserLogin(router, '登录后可发帖')) return
   composeHerbId.value = herbId
   composeHerbName.value = herbName
+  composeTitle.value = ''
+  composeCategory.value = 'share'
   composeContent.value = defaultHerbDraft(herbName)
   showCompose.value = true
   activeCategory.value = 'share'
@@ -130,6 +134,8 @@ function closeCompose() {
   showCompose.value = false
   composeHerbId.value = null
   composeHerbName.value = ''
+  composeTitle.value = ''
+  composeCategory.value = 'question'
   composeContent.value = ''
   if (route.query.compose === 'herb') {
     clearComposeQuery()
@@ -157,6 +163,8 @@ function onCompose() {
   showCompose.value = true
   composeHerbId.value = null
   composeHerbName.value = ''
+  composeTitle.value = ''
+  composeCategory.value = activeCategory.value === 'share' ? 'share' : 'question'
   composeContent.value = ''
 }
 
@@ -171,13 +179,21 @@ async function onPublish() {
   try {
     if (composeHerbId.value) {
       await shareHerbToForum(composeHerbId.value, content)
-      ElMessage.success('药材分享已发布')
+      ElMessage.success('药材分享已发布到社区')
     } else {
-      ElMessage.info('通用发帖接口开发中，请通过图鉴「分享到社区」发布药材心得')
-      return
+      const title = composeTitle.value.trim()
+      if (!title) {
+        ElMessage.warning('请填写帖子标题')
+        return
+      }
+      await createForumPost({
+        title,
+        content,
+        category: composeCategory.value,
+      })
+      ElMessage.success('帖子已发布到社区')
     }
     closeCompose()
-    activeCategory.value = 'share'
     page.value = 1
     await loadPosts()
   } finally {
@@ -267,11 +283,24 @@ onMounted(() => {
 
       <el-input
         v-if="composeHerbId"
-        :model-value="composeTitle"
+        :model-value="composeTitlePreview"
         readonly
         class="compose-title"
         placeholder="标题"
       />
+      <template v-else>
+        <el-radio-group v-model="composeCategory" class="compose-category">
+          <el-radio value="question">提问互助</el-radio>
+          <el-radio value="share">学习心得</el-radio>
+        </el-radio-group>
+        <el-input
+          v-model="composeTitle"
+          class="compose-title"
+          placeholder="帖子标题"
+          maxlength="200"
+          show-word-limit
+        />
+      </template>
 
       <el-input
         v-model="composeContent"
@@ -291,7 +320,7 @@ onMounted(() => {
     </section>
 
     <p v-else class="community-tip">
-      在药材图鉴中点击「分享到社区」可跳转至此编写帖子；收藏药材请使用图鉴中的「收藏」加入药匣。
+      发帖后即时展示在社区；违规内容管理员可在后台隐藏或删除。
     </p>
 
     <div v-loading="loading" class="post-list">
@@ -460,6 +489,10 @@ onMounted(() => {
 
 .compose-title {
   margin-bottom: 0;
+}
+
+.compose-category {
+  margin-bottom: 4px;
 }
 
 .compose-actions {

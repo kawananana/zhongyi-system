@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, nextTick, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Search } from '@element-plus/icons-vue'
 import HomeHeader from '@/components/home/HomeHeader.vue'
 import HerbFilterPanel from '@/components/atlas/HerbFilterPanel.vue'
 import HerbCard from '@/components/atlas/HerbCard.vue'
 import { fetchHerbSearch, type HerbItem } from '@/api/herb'
 import type { HerbFilterQuery } from '@/types/herb'
+import { filterHerbsByCategory } from '@/utils/herbDisplay'
 
 const route = useRoute()
+const router = useRouter()
 const filterPanelRef = ref<InstanceType<typeof HerbFilterPanel> | null>(null)
 
 const loading = ref(false)
@@ -25,7 +27,7 @@ const initialFilterQuery = computed<HerbFilterQuery | undefined>(() => {
   return nature ? { natures: nature } : undefined
 })
 
-const displayList = computed(() => filterPanelRef.value?.filterByCategory(list.value, activeCategory.value) ?? list.value)
+const displayList = computed(() => filterHerbsByCategory(list.value, activeCategory.value))
 
 async function loadList(append = false) {
   loading.value = true
@@ -52,6 +54,24 @@ function onFilterSearch(query: HerbFilterQuery) {
 
 function onCategoryChange(key: string) {
   activeCategory.value = key
+  const query = { ...route.query }
+  if (key) {
+    query.category = key
+  } else {
+    delete query.category
+  }
+  router.replace({ path: route.path, query })
+}
+
+function syncCategoryToPanel() {
+  nextTick(() => {
+    filterPanelRef.value?.selectCategory(activeCategory.value, { silent: true })
+  })
+}
+
+function applyCategoryFromRoute(category: string | string[] | null | undefined) {
+  activeCategory.value = category ? String(category) : ''
+  syncCategoryToPanel()
 }
 
 function onSearch() {
@@ -78,17 +98,9 @@ watch(
   },
 )
 
-watch(
-  () => route.query.category,
-  (category) => {
-    if (category) {
-      const key = String(category)
-      activeCategory.value = key
-      filterPanelRef.value?.selectCategory(key)
-    }
-  },
-  { immediate: true },
-)
+watch(() => route.query.category, applyCategoryFromRoute, { immediate: true })
+
+watch(filterPanelRef, () => syncCategoryToPanel())
 </script>
 
 <template>

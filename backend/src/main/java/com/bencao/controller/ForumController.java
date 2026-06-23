@@ -3,6 +3,7 @@ package com.bencao.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.bencao.common.PageResult;
 import com.bencao.common.Result;
+import com.bencao.dto.CreateForumPostRequest;
 import com.bencao.dto.ForumPostVO;
 import com.bencao.dto.ShareHerbRequest;
 import com.bencao.security.UserContext;
@@ -40,6 +41,12 @@ public class ForumController {
                 postPage.getCurrent(),
                 postPage.getSize()
         ));
+    }
+
+    @PostMapping("/posts")
+    public Result<ForumPostVO> createPost(@Valid @RequestBody CreateForumPostRequest request) {
+        long userId = UserContext.requireUserId();
+        return Result.success(forumService.createPost(userId, request));
     }
 
     @PostMapping("/share/herb")

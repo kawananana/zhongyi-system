@@ -6,6 +6,17 @@ import { clearAccessToken, clearAdminAccessToken, getAccessToken, getAdminAccess
 const USER_LOGIN_PATH = '/login'
 const ADMIN_LOGIN_PATH = '/admin/login'
 
+export interface RequestConfig extends AxiosRequestConfig {
+  /** 为 true 时不弹出错误提示（用于后台同步类请求） */
+  silent?: boolean
+}
+
+type RequestInternalConfig = InternalAxiosRequestConfig & { silent?: boolean }
+
+function isSilent(config?: AxiosRequestConfig): boolean {
+  return !!(config as RequestInternalConfig | undefined)?.silent
+}
+
 function isAdminApi(url?: string): boolean {
   if (!url) return false
   return url.includes('/admin/')
@@ -40,6 +51,7 @@ service.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 service.interceptors.response.use(
   (response) => {
     const body = response.data as Result<unknown>
+    const silent = isSilent(response.config)
 
     if (body && typeof body === 'object' && 'code' in body) {
       if (body.code === 401) {
@@ -47,7 +59,9 @@ service.interceptors.response.use(
         return Promise.reject(new Error(body.message || '未登录'))
       }
       if (body.code !== 200) {
-        ElMessage.error(body.message || '请求失败')
+        if (!silent) {
+          ElMessage.error(body.message || '请求失败')
+        }
         return Promise.reject(new Error(body.message || '请求失败'))
       }
       return body.data
@@ -59,20 +73,23 @@ service.interceptors.response.use(
     const httpStatus = error.response?.status
     const body = error.response?.data as Result<unknown> | undefined
     const adminApi = isAdminApi(error.config?.url)
+    const silent = isSilent(error.config)
 
     if (httpStatus === 401 || body?.code === 401) {
       redirectToLogin(adminApi)
       return Promise.reject(error)
     }
 
-    const message = body?.message || error.message || '网络异常'
-    ElMessage.error(message)
+    if (!silent) {
+      const message = body?.message || error.message || '网络异常'
+      ElMessage.error(message)
+    }
     return Promise.reject(error)
   },
 )
 
 /** 已剥离 Result 包络的请求方法 */
-export function request<T>(config: AxiosRequestConfig): Promise<T> {
+export function request<T>(config: RequestConfig): Promise<T> {
   return service.request<unknown, T>(config)
 }
 
